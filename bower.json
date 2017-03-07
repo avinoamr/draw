@@ -1,0 +1,27 @@
+{
+  "name": "draw",
+  "homepage": "https://github.com/avinoamr/draw",
+  "authors": [
+    "Roi Avinoam <avinoamr@gmail.com>"
+  ],
+  "description": "Draw HTML elements",
+  "main": "draw.js",
+  "keywords": [
+    "draw",
+    "html",
+    "sketch",
+    "drag",
+    "resize",
+    "dashboard",
+    "wysiwyg",
+    "paint"
+  ],
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ]
+}
