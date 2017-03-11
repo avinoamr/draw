@@ -14,6 +14,9 @@
         }
 
         #sheet {
+            position: relative;
+            overflow: scroll;
+            padding: 10px;
             width: 816px;
             margin: 0 auto;
             height: 80%;
@@ -29,6 +32,12 @@
             width: 816px;
             margin: 0 auto;
         }
+
+        #sheet > div {
+            background: red;
+            /*margin-left: 30px;
+            padding-left: 20px;*/
+        }
         </style>
     </head>
     <body>
@@ -37,18 +46,26 @@
             <button id="addBox">BOX</button>
             <button id="addCircle">CIRCLE</button>
         </div>
-        <div id="sheet"></div>
+        <div id="sheet">
+            <div>Hello</div>
+            <div>World</div>
+        </div>
 
         <script src="../draw.js"></script>
         <script>
-        document.querySelector('#addText').addEventListener('click', function() {
-            var element = document.createElement('div')
-            element.innerHTML = 'Some text...'
-
+        (function() {
             var sheet = document.querySelector('#sheet')
             draw(sheet)
-                .add(element)
-        })
+
+
+        })()
+        // document.querySelector('#addText').addEventListener('click', function() {
+        //     var element = document.createElement('div')
+        //     element.innerHTML = 'Some text...'
+        //
+        //
+        //         .add(element)
+        // })
         </script>
     </body>
 </html>

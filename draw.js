@@ -7,16 +7,101 @@
         return draw
     }
 
-    function draw(el) {
-        if (!el.__draw) {
-            el.classList.add('draw')
-            el.__draw = {
-                container: el,
-                add: add
-            }
-        }
+    function select(el) {
+        // var position = window.getComputedStyle(el).getPropertyValue('position')
+        el = $(el).style({
+            position: 'absolute',
+            width: el.offsetWidth + 'px',
+            height: el.offsetHeight + 'px',
+            top: el.offsetTop + 'px',
+            left: el.offsetLeft + 'px'
+        })
 
-        return el.__draw
+        var rect = el.rect()
+        var drawbox = $(`
+            <div class="draw draw-box">
+                <div draggable="true" class="draw-drag"></div>
+                <div draggable="true" class="draw-resize"></div>
+            </div>
+        `).style({
+            top: rect.top + 'px',
+            left: rect.left + 'px',
+            width: rect.width + 'px',
+            height: rect.height + 'px'
+        })
+        .appendTo($(document.body))
+
+        var startx, starty, elx, ely
+        drawbox.$$('.draw-resize')
+            .on('dragstart', function(ev) {
+                // rect = el.getBoundingClientRect()
+                startx = ev.x
+                starty = ev.y
+                elx = parseFloat(el[0].style.width)
+                ely = parseFloat(el[0].style.height)
+            })
+            .on('drag', function(ev) {
+                var dx = ev.x - startx
+                var dy = ev.y - starty
+
+                el.style({
+                    width: (elx + dx) + 'px',
+                    height: (ely + dy) + 'px'
+                })
+
+                drawbox.style({
+                    width: (rect.width + dx) + 'px',
+                    height: (rect.height + dy) + 'px'
+                })
+            })
+            .on('dragend', function() {
+                rect = el.rect()
+            })
+
+        drawbox.$$('.draw-drag')
+            .on('dragstart', function(ev) {
+                // rect = el.getBoundingClientRect()
+                startx = ev.x
+                starty = ev.y
+                elx = parseFloat(el[0].style.left)
+                ely = parseFloat(el[0].style.top)
+            })
+            .on('drag', function(ev) {
+                var dx = ev.x - startx
+                var dy = ev.y - starty
+
+                el.style({
+                    left: (elx + dx) + 'px',
+                    top: (ely + dy) + 'px'
+                })
+
+                drawbox.style({
+                    left: (rect.left + dx) + 'px',
+                    top: (rect.top + dy) + 'px'
+                })
+            })
+            .on('dragend', function(ev) {
+                rect = el.rect()
+            })
+    }
+
+    function draw(el) {
+        $(el.children)
+            .on('click', function(ev) {
+                $(this).fire('draw:selected', ev)
+            })
+            .on('draw:selected', function () {
+                select(this)
+            })
+
+        // if (!el.__draw) {
+        //     el.__draw = {
+        //         container: el,
+        //         add: add
+        //     }
+        // }
+        //
+        // return el.__draw
     }
 
     function add(element) {
@@ -51,10 +136,20 @@
             var tmp = document.createElement('div')
             tmp.innerHTML = els
             els = tmp.children
-            els = [].slice.apply(els)
         }
 
-        els = Array.isArray(els) ? els : [els]
+        if (els instanceof HTMLCollection) {
+            els = [].slice.apply(els)
+        } else if (!Array.isArray(els)) {
+            els = [els]
+        }
+
+        els.$$ = function(selector) {
+            var res = els.reduce(function(all, el) {
+                return all.concat([].slice.apply(el.querySelectorAll(selector)))
+            }, [])
+            return $(res)
+        }
 
         els.on = function(name, callback) {
             if (name === 'draw:drag') {
@@ -78,6 +173,15 @@
             return els
         }
 
+        els.style = function(obj) {
+            els.forEach(function(el) {
+                Object.keys(obj).forEach(function(k) {
+                    el.style[k] = obj[k]
+                })
+            })
+            return els
+        }
+
         els.appendTo = function(parents) {
             els.forEach(function(el) {
                 parents[0].appendChild(el)
@@ -85,7 +189,9 @@
             return els
         }
 
-        // els.attr
+        els.rect = function() {
+            return els[0].getBoundingClientRect()
+        }
 
 
         return els
