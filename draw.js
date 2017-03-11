@@ -8,8 +8,15 @@
     }
 
     function select(el) {
-        // var position = window.getComputedStyle(el).getPropertyValue('position')
-        el = $(el).style({
+        var drawbox = $(`
+            <div class="draw draw-box">
+                <div draggable="true" class="draw-drag"></div>
+                <div draggable="true" class="draw-resize"></div>
+            </div>
+        `)
+        .appendTo($(el.parentNode));
+
+        var els = $([el, drawbox[0]]).style({
             position: 'absolute',
             width: el.offsetWidth + 'px',
             height: el.offsetHeight + 'px',
@@ -17,45 +24,23 @@
             left: el.offsetLeft + 'px'
         })
 
-        var rect = el.rect()
-        var drawbox = $(`
-            <div class="draw draw-box">
-                <div draggable="true" class="draw-drag"></div>
-                <div draggable="true" class="draw-resize"></div>
-            </div>
-        `).style({
-            top: rect.top + 'px',
-            left: rect.left + 'px',
-            width: rect.width + 'px',
-            height: rect.height + 'px'
-        })
-        .appendTo($(document.body))
-
         var startx, starty, elx, ely
         drawbox.$$('.draw-resize')
             .on('dragstart', function(ev) {
                 // rect = el.getBoundingClientRect()
                 startx = ev.x
                 starty = ev.y
-                elx = parseFloat(el[0].style.width)
-                ely = parseFloat(el[0].style.height)
+                elx = parseFloat(el.style.width)
+                ely = parseFloat(el.style.height)
             })
             .on('drag', function(ev) {
                 var dx = ev.x - startx
                 var dy = ev.y - starty
 
-                el.style({
+                els.style({
                     width: (elx + dx) + 'px',
                     height: (ely + dy) + 'px'
                 })
-
-                drawbox.style({
-                    width: (rect.width + dx) + 'px',
-                    height: (rect.height + dy) + 'px'
-                })
-            })
-            .on('dragend', function() {
-                rect = el.rect()
             })
 
         drawbox.$$('.draw-drag')
@@ -63,25 +48,17 @@
                 // rect = el.getBoundingClientRect()
                 startx = ev.x
                 starty = ev.y
-                elx = parseFloat(el[0].style.left)
-                ely = parseFloat(el[0].style.top)
+                elx = parseFloat(el.style.left)
+                ely = parseFloat(el.style.top)
             })
             .on('drag', function(ev) {
                 var dx = ev.x - startx
                 var dy = ev.y - starty
 
-                el.style({
+                els.style({
                     left: (elx + dx) + 'px',
                     top: (ely + dy) + 'px'
                 })
-
-                drawbox.style({
-                    left: (rect.left + dx) + 'px',
-                    top: (rect.top + dy) + 'px'
-                })
-            })
-            .on('dragend', function(ev) {
-                rect = el.rect()
             })
     }
 
