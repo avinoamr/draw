@@ -1,8 +1,6 @@
 <!doctype html>
 <html>
     <head>
-        <link href="draw.css" rel="stylesheet" />
-
         <style>
         html, body {
             margin: 0;
@@ -14,6 +12,7 @@
         }
 
         #sheet {
+            display: block;
             position: relative;
             overflow: scroll;
             padding: 10px;
@@ -41,31 +40,21 @@
         </style>
     </head>
     <body>
+        <script src="../draw.js"></script>
         <div id="toolbox">
             <button id="addText">TEXT</button>
             <button id="addBox">BOX</button>
             <button id="addCircle">CIRCLE</button>
         </div>
-        <div id="sheet">
+        <draw-box id="sheet">
             <section>Hello</section>
             <section>World</section>
-        </div>
+        </draw-box>
 
-        <script src="../draw.js"></script>
         <script>
-        (function() {
-            var sheet = document.querySelector('#sheet')
-            draw(sheet)
-
-
-        })()
-        // document.querySelector('#addText').addEventListener('click', function() {
-        //     var element = document.createElement('div')
-        //     element.innerHTML = 'Some text...'
-        //
-        //
-        //         .add(element)
-        // })
+        document.addEventListener('DOMContentLoaded', function () {
+            DrawBox.init(this.querySelector('draw-box'))
+        })
         </script>
     </body>
 </html>

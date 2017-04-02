@@ -5,7 +5,7 @@
 // easier with a Shadow-DOM stylesheet, but we don't want to require the
 // shadow-dom pollyfill especially for cases where users opt to use the
 // `DrawBox.init(el)` work-around when they don't want any custom-element
-// polyfills.
+// polyfills. See the $create() helper function.
 // TODO: reconsider when shadow-dom is has better vendor support.
 var styles = {
     selection: {
@@ -44,12 +44,11 @@ var styles = {
 }
 
 class DrawBox extends HTMLElement {
-    constructor() {
-        super()
-        this.createdCallback()
+    attachedCallback() { // compatibility with custom-elements v0
+        this.connectedCallback()
     }
 
-    createdCallback() {
+    connectedCallback() {
         this.style.display = 'block'
         this.style.position = 'relative'
 
@@ -197,7 +196,7 @@ class DrawBox extends HTMLElement {
         }
 
         Object.setPrototypeOf(el, DrawBox.prototype)
-        el.createdCallback()
+        el.connectedCallback() // harmless even when not connected.
     }
 }
 
@@ -298,6 +297,16 @@ DrawBox.initTrackEvents = function(el, options) {
     return el
 }
 
+document.addEventListener('DOMContentLoaded', function () {
+    if ('customElements' in window) {
+        window.customElements.define('draw-box', DrawBox)
+    } else if ('registerElement' in document) {
+        window.DrawBox = document.registerElement('draw-box', DrawBox)
+    } else {
+        console.warn('<draw-box>: custom elements aren\'t supported')
+        console.warn('<draw-box>: initialize elements with DrawBox.init(el)')
+    }
+})
+
 window.DrawBox = DrawBox
-window.customElements.define('draw-box', DrawBox)
 })()
