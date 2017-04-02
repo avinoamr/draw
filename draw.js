@@ -80,6 +80,7 @@ class DrawBox extends HTMLElement {
             selectBox.style.top = selectBox._startTop + 'px'
             selectBox.style.left = selectBox._startLeft + 'px'
             this.appendChild(selectBox)
+            $vendorStyle(this, 'userSelect', 'none')
         }
 
         // on negative deltas - the user drags from bottom-right to top-left.
@@ -114,6 +115,7 @@ class DrawBox extends HTMLElement {
 
         if (state === 'end') {
             this.removeChild(selectBox)
+            $vendorStyle(this, 'userSelect', null)
         }
     }
 
@@ -123,11 +125,16 @@ class DrawBox extends HTMLElement {
             var rect = this.getBoundingClientRect()
             el._startTop = y - rect.top
             el._startLeft = x - rect.left
+            $vendorStyle(this, 'userSelect', 'none')
         }
 
         el.style.top = el._startTop + dy + 'px'
         el.style.left = el._startLeft + dx + 'px'
         el._drawboxSelected.update()
+
+        if (state === 'end') {
+            $vendorStyle(this, 'userSelect', null)
+        }
     }
 
     onResize(el, ev) {
@@ -136,11 +143,16 @@ class DrawBox extends HTMLElement {
             var computed = window.getComputedStyle(el)
             el._startWidth = parseFloat(computed.getPropertyValue('width'))
             el._startHeight = parseFloat(computed.getPropertyValue('height'))
+            $vendorStyle(this, 'userSelect', 'none')
         }
 
         el.style.width = el._startWidth + dx + 'px'
         el.style.height = el._startHeight + dy + 'px'
         el._drawboxSelected.update()
+
+        if (state === 'end') {
+            $vendorStyle(this, 'userSelect', null)
+        }
     }
 
     select(child) {
@@ -229,6 +241,15 @@ function $create(innerHTML) {
     }
 
     return child
+}
+
+function $vendorStyle(el, prop, value) {
+    var capProp = prop[0].toUpperCase() + prop.slice(1)
+    el.style['webkit' + capProp] = value;
+    el.style['moz' + capProp] = value;
+    el.style['ms' + capProp] = value;
+    el.style['o' + capProp] = value;
+    el.style[prop] = value
 }
 
 // generic - can be moved to its own library, or replaced with Hammer.js Pan.
