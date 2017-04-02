@@ -209,21 +209,20 @@ class DrawBox extends HTMLElement {
             if (child._drawbox) {
                 continue
             }
-
-            if (window.getComputedStyle(child).position !== 'absolute') {
+            var style = window.getComputedStyle(child)
+            if (style.position !== 'absolute') {
                 reposition.push({
                     child,
-                    position: 'absolute',
                     top: child.offsetTop + 'px',
                     left: child.offsetLeft + 'px',
-                    width: child.offsetWidth + 'px',
-                    height: child.offsetHeight + 'px',
+                    width: style.width,
+                    height: style.height
                 })
             }
         }
 
         reposition.forEach(function(item) {
-            Object.assign(item.child.style, item)
+            Object.assign(item.child.style, item, { position: 'absolute' })
         })
     }
 
