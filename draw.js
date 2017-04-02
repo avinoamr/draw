@@ -122,6 +122,7 @@ class DrawBox extends HTMLElement {
     onDrag(el, ev) {
         var { x, y, dx, dy, state } = ev.detail
         if (state === 'start') {
+            this._absoluteChildren()
             var rect = this.getBoundingClientRect()
             el._startTop = y - rect.top
             el._startLeft = x - rect.left
@@ -140,6 +141,7 @@ class DrawBox extends HTMLElement {
     onResize(el, ev) {
         var { dx, dy, state } = ev.detail
         if (state === 'start') {
+            this._absoluteChildren()
             var computed = window.getComputedStyle(el)
             el._startWidth = parseFloat(computed.getPropertyValue('width'))
             el._startHeight = parseFloat(computed.getPropertyValue('height'))
@@ -194,6 +196,35 @@ class DrawBox extends HTMLElement {
             this.removeChild(child._drawboxSelected)
             child._drawboxSelected = null
         }
+    }
+
+    // apply the absolute positioning to all child elements in order to make
+    // them draggable/resizable. While it seems irrelevant for resizability,
+    // having some non-absolutely positionined elements may cause resizing to
+    // push around to a new position.
+    _absoluteChildren() {
+        var reposition = []
+        for (var i = 0; i < this.children.length; i += 1) {
+            var child = this.children[i]
+            if (child._drawbox) {
+                continue
+            }
+
+            if (window.getComputedStyle(child).position !== 'absolute') {
+                reposition.push({
+                    child,
+                    position: 'absolute',
+                    top: child.offsetTop + 'px',
+                    left: child.offsetLeft + 'px',
+                    width: child.offsetWidth + 'px',
+                    height: child.offsetHeight + 'px',
+                })
+            }
+        }
+
+        reposition.forEach(function(item) {
+            Object.assign(item.child.style, item)
+        })
     }
 
     static get styles() {
