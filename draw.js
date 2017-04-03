@@ -1,6 +1,11 @@
 (function(){
 // TODO: consider moving this into a separate .css file.
 var styles = `
+draw-box {
+    display: block;
+    position: relative;
+}
+
 .draw-box-selection {
     position: absolute;
     border: 1px solid silver;
@@ -38,7 +43,13 @@ var styles = `
     border-left: none;
     cursor: nwse-resize;
     pointer-events: auto;
-}`
+}
+
+.draw-box-hover .draw-box-dragger,
+.draw-box-hover .draw-box-resizer {
+    display: block
+}
+`
 
 class DrawBox extends HTMLElement {
     attachedCallback() { // compatibility with custom-elements v0
@@ -58,7 +69,7 @@ class DrawBox extends HTMLElement {
         var s = `<style id='draw-box-styles'>` + DrawBox.styles + `</style>`
         this.parentNode.insertBefore($create(s), this)
 
-        this.style.display = 'block'
+        this.style.display = ''
         this.style.position = 'relative'
 
         DrawBox.initTrackEvents(this)
@@ -80,15 +91,7 @@ class DrawBox extends HTMLElement {
                 continue
             }
 
-            var dragger = child.querySelector('.draw-box-dragger')
-            var resizer = child.querySelector('.draw-box-resizer')
-            if (!dragger || !resizer) {
-                return
-            }
-
-            var show = intersect(pos, child) ? 'block' : 'none'
-            dragger.style.display = show
-            resizer.style.display = show
+            child.classList.toggle('draw-box-hover', intersect(pos, child))
         }
     }
 
