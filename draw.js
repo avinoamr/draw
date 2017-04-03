@@ -78,12 +78,12 @@ class DrawBox extends HTMLElement {
         var s = `<style id='draw-box-styles'>` + DrawBox.styles + `</style>`
         this.parentNode.insertBefore($create(s), this)
 
+        var selectBox = $create(`<div class='draw-box-selection'></div>`)
+
         DrawBox.initTrackEvents(this)
-        this.addEventListener('track', this.onTrack.bind(this, 'draw', this))
+        this.addEventListener('track', this.onTrack.bind(this, 'draw', selectBox))
         this.addEventListener('click', this.onClick)
         this.addEventListener('mousemove', this.onMouseMove)
-
-        this._selectBox = $create(`<div class='draw-box-selection'></div>`)
     }
 
     onMouseMove(ev) {
@@ -134,7 +134,6 @@ class DrawBox extends HTMLElement {
 
     onDraw(el, ev) {
         var { x, y, dx, dy, state } = ev.detail
-        var selectBox = this._selectBox
         var drawEl = this.getAttribute('draw')
         if (state === 'start') {
             var rect = this.getBoundingClientRect()
@@ -144,32 +143,31 @@ class DrawBox extends HTMLElement {
                 this.appendChild(drawEl)
             }
 
-            $bind(selectBox, drawEl)
-            selectBox._startTop = y - rect.top
-            selectBox._startLeft = x - rect.left
-            selectBox.style.top = selectBox._startTop + 'px'
-            selectBox.style.left = selectBox._startLeft + 'px'
-            this.appendChild(selectBox)
-
+            $bind(el, drawEl)
+            el._startTop = y - rect.top
+            el._startLeft = x - rect.left
+            el.style.top = el._startTop + 'px'
+            el.style.left = el._startLeft + 'px'
+            this.appendChild(el)
         }
 
         // on negative deltas - the user drags from bottom-right to top-left.
         // reverse the logic such that it drags the start-position instead of
         // the end-positing.
         if (dx < 0) {
-            selectBox.style.left = selectBox._startLeft + dx + 'px'
+            el.style.left = el._startLeft + dx + 'px'
             dx *= -1
         }
 
         if (dy < 0) {
-            selectBox.style.top = selectBox._startTop + dy + 'px'
+            el.style.top = el._startTop + dy + 'px'
             dy *= -1
         }
 
         // adjust the width and height
-        selectBox.style.width = dx + 'px'
-        selectBox.style.height = dy + 'px'
-        selectBox.update()
+        el.style.width = dx + 'px'
+        el.style.height = dy + 'px'
+        el.update()
 
         // find intersections and select/deselect elements
         // TODO if it gets slow, we can consider a quadtree implementation.
@@ -178,7 +176,7 @@ class DrawBox extends HTMLElement {
             var child = children[i]
             if (child._drawbox) {
                 continue
-            } else if (intersect(selectBox, child)) {
+            } else if (intersect(el, child)) {
                 this.select(child)
             } else {
                 this.deselect(child)
@@ -186,35 +184,33 @@ class DrawBox extends HTMLElement {
         }
 
         if (state === 'end') {
-            this.removeChild(selectBox)
+            this.removeChild(el)
             this.removeAttribute('draw') // auto-disable draw.
         }
     }
 
     onDrag(el, ev) {
         var { dx, dy, state } = ev.detail
-        var selectBox = el._drawboxSelected
         if (state === 'start') {
-            selectBox._startTop = parseFloat(selectBox.style.top)
-            selectBox._startLeft = parseFloat(selectBox.style.left)
+            el._startTop = parseFloat(el.style.top)
+            el._startLeft = parseFloat(el.style.left)
         }
 
-        selectBox.style.top = selectBox._startTop + dy + 'px'
-        selectBox.style.left = selectBox._startLeft + dx + 'px'
-        selectBox.update()
+        el.style.top = el._startTop + dy + 'px'
+        el.style.left = el._startLeft + dx + 'px'
+        el.update()
     }
 
     onResize(el, ev) {
         var { dx, dy, state } = ev.detail
-        var selectBox = el._drawboxSelected
         if (state === 'start') {
-            selectBox._startWidth = parseFloat(selectBox.style.width)
-            selectBox._startHeight = parseFloat(selectBox.style.height)
+            el._startWidth = parseFloat(el.style.width)
+            el._startHeight = parseFloat(el.style.height)
         }
 
-        selectBox.style.width = selectBox._startWidth + dx + 'px'
-        selectBox.style.height = selectBox._startHeight + dy + 'px'
-        selectBox.update()
+        el.style.width = el._startWidth + dx + 'px'
+        el.style.height = el._startHeight + dy + 'px'
+        el.update()
     }
 
     select(child) {
@@ -241,12 +237,12 @@ class DrawBox extends HTMLElement {
         // onDrag
         var dragger = selectBox.querySelector('.draw-box-dragger')
         DrawBox.initTrackEvents(dragger)
-            .addEventListener('track', this.onTrack.bind(this, 'drag', child))
+            .addEventListener('track', this.onTrack.bind(this, 'drag', selectBox))
 
         // onResize
         var resizer = selectBox.querySelector('.draw-box-resizer')
         DrawBox.initTrackEvents(resizer)
-            .addEventListener('track', this.onTrack.bind(this, 'resize', child))
+            .addEventListener('track', this.onTrack.bind(this, 'resize', selectBox))
     }
 
     deselect(child) {
@@ -288,9 +284,7 @@ function intersect(el1, el2) {
 function $create(innerHTML) {
     var container = document.createElement('div')
     container.innerHTML = innerHTML
-    var child = container.children[0]
-    child._drawbox = true
-    return child
+    return Object.assign(container.children[0], { _drawbox: true })
 }
 
 function $bind(el, target) {
@@ -375,6 +369,7 @@ DrawBox.initTrackEvents = function(el, options) {
     return el
 }
 
+// register the element
 document.addEventListener('DOMContentLoaded', function () {
     if ('customElements' in window) {
         window.customElements.define('draw-box', DrawBox)
@@ -382,7 +377,7 @@ document.addEventListener('DOMContentLoaded', function () {
         window.DrawBox = document.registerElement('draw-box', DrawBox)
     } else {
         console.warn('<draw-box>: custom elements aren\'t supported')
-        console.warn('<draw-box>: initialize elements with DrawBox.init(el)')
+        console.warn('<draw-box>: Initialize <draw-box> with DrawBox.init(el)')
     }
 })
 
