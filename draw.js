@@ -73,7 +73,7 @@ class DrawBox extends HTMLElement {
         this.style.position = 'relative'
 
         DrawBox.initTrackEvents(this)
-        this.addEventListener('track', this.onTrack)
+        this.addEventListener('track', this.onTrack.bind(this, 'draw', this))
         this.addEventListener('click', this.onClick)
         this.addEventListener('mousemove', this.onMouseMove)
 
@@ -95,6 +95,20 @@ class DrawBox extends HTMLElement {
         }
     }
 
+    onTrack(type, el, ev) {
+        if (ev.detail.state === 'start') {
+            this.removeEventListener('mousemove', this.onMouseMove)
+            $vendorStyle(this, 'userSelect', 'none')
+        }
+
+        this['on' + type[0].toUpperCase() + type.slice(1)].call(this, el, ev)
+        
+        if (ev.detail.state === 'end') {
+            $vendorStyle(this, 'userSelect', null)
+            this.addEventListener('mousemove', this.onMouseMove)
+        }
+    }
+
     onClick(ev) {
         if (ev.target === this) {
             // de-select all on background click.
@@ -102,7 +116,8 @@ class DrawBox extends HTMLElement {
                 this.deselect(child)
             }, this)
         } else {
-            // find the selected element
+            // find the selected element by walking up the ancestors tree until
+            // we find the immediate child of this draw-box to select.
             var target = ev.target
             while (target.parentNode !== this) {
                 target = target.parentNode
@@ -111,13 +126,11 @@ class DrawBox extends HTMLElement {
         }
     }
 
-    onTrack(ev) {
+    onDraw(el, ev) {
         var { x, y, dx, dy, state } = ev.detail
         var selectBox = this._selectBox
         var drawEl = this.getAttribute('draw')
         if (state === 'start') {
-            this.removeEventListener('mousemove', this.onMouseMove)
-
             var rect = this.getBoundingClientRect()
             if (drawEl !== null) {
                 drawEl = document.createElement(drawEl || 'div')
@@ -131,7 +144,7 @@ class DrawBox extends HTMLElement {
             selectBox.style.top = selectBox._startTop + 'px'
             selectBox.style.left = selectBox._startLeft + 'px'
             this.appendChild(selectBox)
-            $vendorStyle(this, 'userSelect', 'none')
+
         }
 
         // on negative deltas - the user drags from bottom-right to top-left.
@@ -167,10 +180,8 @@ class DrawBox extends HTMLElement {
         }
 
         if (state === 'end') {
-            this.addEventListener('mousemove', this.onMouseMove)
             this.removeChild(selectBox)
             this.removeAttribute('draw') // auto-disable draw.
-            $vendorStyle(this, 'userSelect', null)
         }
     }
 
@@ -178,40 +189,26 @@ class DrawBox extends HTMLElement {
         var { dx, dy, state } = ev.detail
         var selectBox = el._drawboxSelected
         if (state === 'start') {
-            this.removeEventListener('mousemove', this.onMouseMove)
             selectBox._startTop = parseFloat(selectBox.style.top)
             selectBox._startLeft = parseFloat(selectBox.style.left)
-            $vendorStyle(this, 'userSelect', 'none')
         }
 
         selectBox.style.top = selectBox._startTop + dy + 'px'
         selectBox.style.left = selectBox._startLeft + dx + 'px'
         selectBox.update()
-
-        if (state === 'end') {
-            this.addEventListener('mousemove', this.onMouseMove)
-            $vendorStyle(this, 'userSelect', null)
-        }
     }
 
     onResize(el, ev) {
         var { dx, dy, state } = ev.detail
         var selectBox = el._drawboxSelected
         if (state === 'start') {
-            this.removeEventListener('mousemove', this.onMouseMove)
             selectBox._startWidth = parseFloat(selectBox.style.width)
             selectBox._startHeight = parseFloat(selectBox.style.height)
-            $vendorStyle(this, 'userSelect', 'none')
         }
 
         selectBox.style.width = selectBox._startWidth + dx + 'px'
         selectBox.style.height = selectBox._startHeight + dy + 'px'
         selectBox.update()
-
-        if (state === 'end') {
-            this.addEventListener('mousemove', this.onMouseMove)
-            $vendorStyle(this, 'userSelect', null)
-        }
     }
 
     select(child) {
@@ -238,12 +235,12 @@ class DrawBox extends HTMLElement {
         // onDrag
         var dragger = selectBox.querySelector('.draw-box-dragger')
         DrawBox.initTrackEvents(dragger)
-            .addEventListener('track', this.onDrag.bind(this, child))
+            .addEventListener('track', this.onTrack.bind(this, 'drag', child))
 
         // onResize
         var resizer = selectBox.querySelector('.draw-box-resizer')
         DrawBox.initTrackEvents(resizer)
-            .addEventListener('track', this.onResize.bind(this, child))
+            .addEventListener('track', this.onTrack.bind(this, 'resize', child))
     }
 
     deselect(child) {
