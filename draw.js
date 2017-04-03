@@ -73,28 +73,16 @@ class DrawBox extends HTMLElement {
     onTrack(ev) {
         var { x, y, dx, dy, state } = ev.detail
         var selectBox = this._selectBox
+        var drawEl = this.getAttribute('draw')
         if (state === 'start') {
             var rect = this.getBoundingClientRect()
-            var drawEl = this.getAttribute('draw')
             if (drawEl !== null) {
                 drawEl = document.createElement(drawEl || 'div')
                 drawEl.style.position = 'absolute'
                 this.appendChild(drawEl)
             }
 
-            selectBox._drawEl = drawEl
-            selectBox.update = function() {
-                if (!drawEl) {
-                    return
-                }
-
-                drawEl.style.top = this.style.top
-                drawEl.style.left = this.style.left
-                drawEl.style.width = this.style.width
-                drawEl.style.height = this.style.height
-                return this
-            }
-
+            selectBox.bindElement(drawEl)
             selectBox._startTop = y - rect.top
             selectBox._startLeft = x - rect.left
             selectBox.style.top = selectBox._startTop + 'px'
@@ -119,9 +107,9 @@ class DrawBox extends HTMLElement {
         // adjust the width and height
         selectBox.style.width = dx + 'px'
         selectBox.style.height = dy + 'px'
-
         selectBox.update()
-        var children = selectBox._drawEl ? [] : this.children
+        
+        var children = drawEl ? [] : this.children
 
         // find intersections and select/deselect elements
         // TODO if it gets slow, we can consider a quadtree implementation.
@@ -191,20 +179,12 @@ class DrawBox extends HTMLElement {
                 <div class='draw-box-dragger'></div>
                 <div class='draw-box-resizer'></div>
             </div>
-        `)
+        `).bindElement(child)
 
         selectBox.style.top = child.offsetTop + 'px'
         selectBox.style.left = child.offsetLeft + 'px'
         selectBox.style.width = child.offsetWidth + 'px'
         selectBox.style.height = child.offsetHeight + 'px'
-
-        selectBox.update = function() {
-            child.style.top = this.style.top
-            child.style.left = this.style.left
-            child.style.width = this.style.width
-            child.style.height = this.style.height
-            return this
-        }
 
         child._drawboxSelected = selectBox.update()
         this.appendChild(selectBox)
@@ -269,6 +249,23 @@ function $create(innerHTML) {
         var cls = el.className.replace('draw-box-', '')
         Object.assign(el.style, DrawBox.styles[cls])
         elements = elements.concat([].slice.call(el.children))
+    }
+
+    child.bindElement = function(el) {
+        this._bound = el
+        return this
+    }
+
+    child.update = function() {
+        if (!this._bound) {
+            return this
+        }
+
+        this._bound.style.top = this.style.top
+        this._bound.style.left = this.style.left
+        this._bound.style.width = this.style.width
+        this._bound.style.height = this.style.height
+        return this
     }
 
     return child
