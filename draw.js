@@ -127,16 +127,17 @@ class DrawBox extends HTMLElement {
 
     onDrag(el, ev) {
         var { x, y, dx, dy, state } = ev.detail
+        var selectBox = el._drawboxSelected
         if (state === 'start') {
             var rect = this.getBoundingClientRect()
-            el._startTop = y - rect.top
-            el._startLeft = x - rect.left
+            selectBox._startTop = y - rect.top
+            selectBox._startLeft = x - rect.left
             $vendorStyle(this, 'userSelect', 'none')
         }
 
-        el.style.top = el._startTop + dy + 'px'
-        el.style.left = el._startLeft + dx + 'px'
-        el._drawboxSelected.update()
+        selectBox.style.top = selectBox._startTop + dy + 'px'
+        selectBox.style.left = selectBox._startLeft + dx + 'px'
+        selectBox.update()
 
         if (state === 'end') {
             $vendorStyle(this, 'userSelect', null)
@@ -145,16 +146,17 @@ class DrawBox extends HTMLElement {
 
     onResize(el, ev) {
         var { dx, dy, state } = ev.detail
+        var selectBox = el._drawboxSelected
         if (state === 'start') {
-            var computed = window.getComputedStyle(el)
-            el._startWidth = parseFloat(computed.getPropertyValue('width'))
-            el._startHeight = parseFloat(computed.getPropertyValue('height'))
+            var rect = selectBox.getBoundingClientRect()
+            selectBox._startWidth = rect.width
+            selectBox._startHeight = rect.height
             $vendorStyle(this, 'userSelect', 'none')
         }
 
-        el.style.width = el._startWidth + dx + 'px'
-        el.style.height = el._startHeight + dy + 'px'
-        el._drawboxSelected.update()
+        selectBox.style.width = selectBox._startWidth + dx + 'px'
+        selectBox.style.height = selectBox._startHeight + dy + 'px'
+        selectBox.update()
 
         if (state === 'end') {
             $vendorStyle(this, 'userSelect', null)
@@ -173,11 +175,16 @@ class DrawBox extends HTMLElement {
             </div>
         `)
 
+        selectBox.style.top = child.offsetTop + 'px'
+        selectBox.style.left = child.offsetLeft + 'px'
+        selectBox.style.width = child.offsetWidth + 'px'
+        selectBox.style.height = child.offsetHeight + 'px'
+
         selectBox.update = function() {
-            this.style.top = child.offsetTop + 'px'
-            this.style.left = child.offsetLeft + 'px'
-            this.style.width = child.offsetWidth + 'px'
-            this.style.height = child.offsetHeight + 'px'
+            child.style.top = this.style.top
+            child.style.left = this.style.left
+            child.style.width = this.style.width
+            child.style.height = this.style.height
             return this
         }
 
