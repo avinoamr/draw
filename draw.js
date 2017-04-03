@@ -122,7 +122,7 @@ class DrawBox extends HTMLElement {
                 this.appendChild(drawEl)
             }
 
-            selectBox.bindElement(drawEl)
+            $bind(selectBox, drawEl)
             selectBox._startTop = y - rect.top
             selectBox._startLeft = x - rect.left
             selectBox.style.top = selectBox._startTop + 'px'
@@ -221,8 +221,9 @@ class DrawBox extends HTMLElement {
                 <div class='draw-box-dragger'></div>
                 <div class='draw-box-resizer'></div>
             </div>
-        `).bindElement(child)
+        `)
 
+        $bind(selectBox, child)
         selectBox.style.top = child.offsetTop + 'px'
         selectBox.style.left = child.offsetLeft + 'px'
         selectBox.style.width = child.offsetWidth + 'px'
@@ -283,24 +284,23 @@ function $create(innerHTML) {
     container.innerHTML = innerHTML
     var child = container.children[0]
     child._drawbox = true
-    child.bindElement = function(el) {
-        this._bound = el
-        return this
-    }
+    return child
+}
 
-    child.update = function() {
-        if (!this._bound) {
+function $bind(el, target) {
+    el.update = function () {
+        if (!target) {
             return this
         }
 
-        this._bound.style.top = this.style.top
-        this._bound.style.left = this.style.left
-        this._bound.style.width = this.style.width
-        this._bound.style.height = this.style.height
+        target.style.top = this.style.top
+        target.style.left = this.style.left
+        target.style.width = this.style.width
+        target.style.height = this.style.height
         return this
     }
 
-    return child
+    return el
 }
 
 function $vendorStyle(el, prop, value) {
