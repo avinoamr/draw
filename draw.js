@@ -1,49 +1,44 @@
 (function(){
-// we use inline styles instead of just using a <style> element because the
-// <draw-box> element might be used within a shadow-dom of another component, so
-// we'd like to have the style contained within the same scope. It would've been
-// easier with a Shadow-DOM stylesheet, but we don't want to require the
-// shadow-dom pollyfill especially for cases where users opt to use the
-// `DrawBox.init(el)` work-around when they don't want any custom-element
-// polyfills. See the $create() helper function.
-// TODO: reconsider when shadow-dom is has better vendor support.
-var styles = {
-    selection: {
-        position: 'absolute',
-        border: '1px solid silver'
-    },
-    selected: {
-        position: 'absolute',
-        boxSizing: 'border-box',
-        border: '1px solid #3498db',
-        pointerEvents: 'none',
-    },
-    dragger: {
-        position: 'absolute',
-        display: 'none',
-        width: '10px',
-        height: '10px',
-        top: '-5px',
-        left: '-5px',
-        cursor: 'pointer',
-        background: '#3498db',
-        pointerEvents: 'auto',
-    },
-    resizer: {
-        position: 'absolute',
-        display: 'none',
-        boxSizing: 'border-box',
-        width: '10px',
-        height: '10px',
-        bottom: '-3px',
-        right: '-3px',
-        border: '4px solid #3498db',
-        borderTop: 'none',
-        borderLeft: 'none',
-        cursor: 'nwse-resize',
-        pointerEvents: 'auto'
-    }
+// TODO: consider moving this into a separate .css file.
+var styles = `
+.draw-box-selection {
+    position: absolute;
+    border: 1px solid silver;
 }
+
+.draw-box-selected {
+    position: absolute;
+    box-sizing: border-box;
+    border: 1px solid #3498db;
+    pointer-events: none;
+}
+
+.draw-box-dragger {
+    position: absolute;
+    display: none;
+    width: 10px;
+    height: 10px;
+    top: -5px;
+    left: -5px;
+    cursor: pointer;
+    background: #3498db;
+    pointer-events: auto;
+}
+
+.draw-box-resizer {
+    position: absolute;
+    display: none;
+    box-sizing: border-box;
+    width: 10px;
+    height: 10px;
+    bottom: -3px;
+    right: -3px;
+    border: 4px solid #3498db;
+    border-top: none;
+    border-left: none;
+    cursor: nwse-resize;
+    pointer-events: auto;
+}`
 
 class DrawBox extends HTMLElement {
     attachedCallback() { // compatibility with custom-elements v0
@@ -51,6 +46,18 @@ class DrawBox extends HTMLElement {
     }
 
     connectedCallback() {
+        // we use inject the style element adjcent to the <draw-box> instead of
+        // on the <head> element because the <draw-box> element might be used
+        // within a shadow-dom of another component, so we'd like to have the
+        // style contained within the same scope. It would've been easier with a
+        // Shadow-DOM stylesheet, but we don't want to require the shadow-dom
+        // pollyfill especially for cases where users opt to use the
+        // `DrawBox.init(el)` work-around when they don't want any custom
+        // element
+        // TODO: reconsider when shadow-dom is has better vendor support.
+        var s = $create(`<style id='draw-box-styles'>` + styles + `</style>`)
+        this.parentNode.insertBefore(s, this)
+
         this.style.display = 'block'
         this.style.position = 'relative'
 
@@ -92,7 +99,12 @@ class DrawBox extends HTMLElement {
                 this.deselect(child)
             }, this)
         } else {
-            // TODO selected clicked element. Maybe with capturing click event?
+            // find the selected element
+            var target = ev.target
+            while (target.parentNode !== this) {
+                target = target.parentNode
+            }
+            this.select(target)
         }
     }
 
@@ -101,6 +113,8 @@ class DrawBox extends HTMLElement {
         var selectBox = this._selectBox
         var drawEl = this.getAttribute('draw')
         if (state === 'start') {
+            this.removeEventListener('mousemove', this.onMouseMove)
+
             var rect = this.getBoundingClientRect()
             if (drawEl !== null) {
                 drawEl = document.createElement(drawEl || 'div')
@@ -150,6 +164,7 @@ class DrawBox extends HTMLElement {
         }
 
         if (state === 'end') {
+            this.addEventListener('mousemove', this.onMouseMove)
             this.removeChild(selectBox)
             this.removeAttribute('draw') // auto-disable draw.
             $vendorStyle(this, 'userSelect', null)
@@ -160,6 +175,7 @@ class DrawBox extends HTMLElement {
         var { dx, dy, state } = ev.detail
         var selectBox = el._drawboxSelected
         if (state === 'start') {
+            this.removeEventListener('mousemove', this.onMouseMove)
             selectBox._startTop = parseFloat(selectBox.style.top)
             selectBox._startLeft = parseFloat(selectBox.style.left)
             $vendorStyle(this, 'userSelect', 'none')
@@ -170,6 +186,7 @@ class DrawBox extends HTMLElement {
         selectBox.update()
 
         if (state === 'end') {
+            this.addEventListener('mousemove', this.onMouseMove)
             $vendorStyle(this, 'userSelect', null)
         }
     }
@@ -178,6 +195,7 @@ class DrawBox extends HTMLElement {
         var { dx, dy, state } = ev.detail
         var selectBox = el._drawboxSelected
         if (state === 'start') {
+            this.removeEventListener('mousemove', this.onMouseMove)
             selectBox._startWidth = parseFloat(selectBox.style.width)
             selectBox._startHeight = parseFloat(selectBox.style.height)
             $vendorStyle(this, 'userSelect', 'none')
@@ -188,6 +206,7 @@ class DrawBox extends HTMLElement {
         selectBox.update()
 
         if (state === 'end') {
+            this.addEventListener('mousemove', this.onMouseMove)
             $vendorStyle(this, 'userSelect', null)
         }
     }
@@ -264,16 +283,6 @@ function $create(innerHTML) {
     container.innerHTML = innerHTML
     var child = container.children[0]
     child._drawbox = true
-
-    // apply the styles based on class name. See comment on DrawBox.styles.
-    var elements = [child]
-    while (elements.length > 0) {
-        var el = elements.pop()
-        var cls = el.className.replace('draw-box-', '')
-        Object.assign(el.style, DrawBox.styles[cls])
-        elements = elements.concat([].slice.call(el.children))
-    }
-
     child.bindElement = function(el) {
         this._bound = el
         return this
@@ -305,7 +314,7 @@ function $vendorStyle(el, prop, value) {
 
 // generic - can be moved to its own library, or replaced with Hammer.js Pan.
 DrawBox.initTrackEvents = function(el, options) {
-    var threshold = (options || {}).threshold || 10
+    var threshold = (options || {}).threshold || 0
 
     if (el._drawboxBound) { // idempotent function
         el.removeEventListener('mousedown', el._drawboxBound)
