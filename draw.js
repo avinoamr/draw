@@ -6,6 +6,15 @@ draw-box {
     position: relative;
 }
 
+.draw-box-no-select {
+    -webkit-touch-callout: none; /* iOS Safari */
+      -webkit-user-select: none; /* Safari */
+       -khtml-user-select: none; /* Konqueror HTML */
+         -moz-user-select: none; /* Firefox */
+          -ms-user-select: none; /* Internet Explorer/Edge */
+              user-select: none; /* Chrome & Opera */
+}
+
 .draw-box-selection {
     position: absolute;
     border: 1px solid silver;
@@ -69,9 +78,6 @@ class DrawBox extends HTMLElement {
         var s = `<style id='draw-box-styles'>` + DrawBox.styles + `</style>`
         this.parentNode.insertBefore($create(s), this)
 
-        this.style.display = ''
-        this.style.position = 'relative'
-
         DrawBox.initTrackEvents(this)
         this.addEventListener('track', this.onTrack.bind(this, 'draw', this))
         this.addEventListener('click', this.onClick)
@@ -95,20 +101,6 @@ class DrawBox extends HTMLElement {
         }
     }
 
-    onTrack(type, el, ev) {
-        if (ev.detail.state === 'start') {
-            this.removeEventListener('mousemove', this.onMouseMove)
-            $vendorStyle(this, 'userSelect', 'none')
-        }
-
-        this['on' + type[0].toUpperCase() + type.slice(1)].call(this, el, ev)
-        
-        if (ev.detail.state === 'end') {
-            $vendorStyle(this, 'userSelect', null)
-            this.addEventListener('mousemove', this.onMouseMove)
-        }
-    }
-
     onClick(ev) {
         if (ev.target === this) {
             // de-select all on background click.
@@ -123,6 +115,20 @@ class DrawBox extends HTMLElement {
                 target = target.parentNode
             }
             this.select(target)
+        }
+    }
+
+    onTrack(type, el, ev) {
+        if (ev.detail.state === 'start') {
+            this.removeEventListener('mousemove', this.onMouseMove)
+            this.classList.add('draw-box-no-select')
+        }
+
+        this['on' + type[0].toUpperCase() + type.slice(1)].call(this, el, ev)
+
+        if (ev.detail.state === 'end') {
+            this.classList.remove('draw-box-no-select')
+            this.addEventListener('mousemove', this.onMouseMove)
         }
     }
 
@@ -301,15 +307,6 @@ function $bind(el, target) {
     }
 
     return el
-}
-
-function $vendorStyle(el, prop, value) {
-    var capProp = prop[0].toUpperCase() + prop.slice(1)
-    el.style['webkit' + capProp] = value;
-    el.style['moz' + capProp] = value;
-    el.style['ms' + capProp] = value;
-    el.style['o' + capProp] = value;
-    el.style[prop] = value
 }
 
 // generic - can be moved to its own library, or replaced with Hammer.js Pan.
