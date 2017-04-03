@@ -55,8 +55,8 @@ class DrawBox extends HTMLElement {
         // `DrawBox.init(el)` work-around when they don't want any custom
         // element
         // TODO: reconsider when shadow-dom is has better vendor support.
-        var s = $create(`<style id='draw-box-styles'>` + styles + `</style>`)
-        this.parentNode.insertBefore(s, this)
+        var s = `<style id='draw-box-styles'>` + DrawBox.styles + `</style>`
+        this.parentNode.insertBefore($create(s), this)
 
         this.style.display = 'block'
         this.style.position = 'relative'
