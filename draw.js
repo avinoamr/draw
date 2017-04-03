@@ -78,7 +78,21 @@ class DrawBox extends HTMLElement {
             var drawEl = this.getAttribute('draw')
             if (drawEl !== null) {
                 drawEl = document.createElement(drawEl || 'div')
+                drawEl.style.position = 'absolute'
                 this.appendChild(drawEl)
+            }
+
+            selectBox._drawEl = drawEl
+            selectBox.update = function() {
+                if (!drawEl) {
+                    return
+                }
+
+                drawEl.style.top = this.style.top
+                drawEl.style.left = this.style.left
+                drawEl.style.width = this.style.width
+                drawEl.style.height = this.style.height
+                return this
             }
 
             selectBox._startTop = y - rect.top
@@ -106,10 +120,13 @@ class DrawBox extends HTMLElement {
         selectBox.style.width = dx + 'px'
         selectBox.style.height = dy + 'px'
 
+        selectBox.update()
+        var children = selectBox._drawEl ? [] : this.children
+
         // find intersections and select/deselect elements
         // TODO if it gets slow, we can consider a quadtree implementation.
-        for (var i = 0; i < this.children.length; i += 1) {
-            var child = this.children[i]
+        for (var i = 0; i < children.length; i += 1) {
+            var child = children[i]
             if (child._drawbox) {
                 continue
             } else if (intersect(selectBox, child)) {
@@ -121,6 +138,7 @@ class DrawBox extends HTMLElement {
 
         if (state === 'end') {
             this.removeChild(selectBox)
+            this.removeAttribute('draw') // auto-disable draw.
             $vendorStyle(this, 'userSelect', null)
         }
     }
