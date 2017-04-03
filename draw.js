@@ -108,11 +108,10 @@ class DrawBox extends HTMLElement {
         selectBox.style.width = dx + 'px'
         selectBox.style.height = dy + 'px'
         selectBox.update()
-        
-        var children = drawEl ? [] : this.children
 
         // find intersections and select/deselect elements
         // TODO if it gets slow, we can consider a quadtree implementation.
+        var children = drawEl ? [] : this.children
         for (var i = 0; i < children.length; i += 1) {
             var child = children[i]
             if (child._drawbox) {
@@ -132,12 +131,11 @@ class DrawBox extends HTMLElement {
     }
 
     onDrag(el, ev) {
-        var { x, y, dx, dy, state } = ev.detail
+        var { dx, dy, state } = ev.detail
         var selectBox = el._drawboxSelected
         if (state === 'start') {
-            var rect = this.getBoundingClientRect()
-            selectBox._startTop = y - rect.top
-            selectBox._startLeft = x - rect.left
+            selectBox._startTop = parseFloat(selectBox.style.top)
+            selectBox._startLeft = parseFloat(selectBox.style.left)
             $vendorStyle(this, 'userSelect', 'none')
         }
 
@@ -154,9 +152,8 @@ class DrawBox extends HTMLElement {
         var { dx, dy, state } = ev.detail
         var selectBox = el._drawboxSelected
         if (state === 'start') {
-            var rect = selectBox.getBoundingClientRect()
-            selectBox._startWidth = rect.width
-            selectBox._startHeight = rect.height
+            selectBox._startWidth = parseFloat(selectBox.style.width)
+            selectBox._startHeight = parseFloat(selectBox.style.height)
             $vendorStyle(this, 'userSelect', 'none')
         }
 
