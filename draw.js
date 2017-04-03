@@ -20,6 +20,7 @@ var styles = {
     },
     dragger: {
         position: 'absolute',
+        display: 'none',
         width: '10px',
         height: '10px',
         top: '-5px',
@@ -30,6 +31,7 @@ var styles = {
     },
     resizer: {
         position: 'absolute',
+        display: 'none',
         boxSizing: 'border-box',
         width: '10px',
         height: '10px',
@@ -55,8 +57,32 @@ class DrawBox extends HTMLElement {
         DrawBox.initTrackEvents(this)
         this.addEventListener('track', this.onTrack)
         this.addEventListener('click', this.onClick)
+        this.addEventListener('mousemove', this.onMouseMove)
 
         this._selectBox = $create(`<div class='draw-box-selection'></div>`)
+    }
+
+    onMouseMove(ev) {
+        var { x, y } = ev
+        var pos = { left: x, top: y, width: 1, height: 1 }
+
+        var selected = []
+        for (var i = 0; i < this.children.length ; i += 1) {
+            var child = this.children[i]
+            if (!child._drawbox) {
+                continue
+            }
+
+            var dragger = child.querySelector('.draw-box-dragger')
+            var resizer = child.querySelector('.draw-box-resizer')
+            if (!dragger || !resizer) {
+                return
+            }
+
+            var show = intersect(pos, child) ? 'block' : 'none'
+            dragger.style.display = show
+            resizer.style.display = show
+        }
     }
 
     onClick(ev) {
@@ -222,8 +248,8 @@ class DrawBox extends HTMLElement {
 
 // check if two elements are intersected
 function intersect(el1, el2) {
-    var r1 = el1.getBoundingClientRect()
-    var r2 = el2.getBoundingClientRect()
+    var r1 = el1 instanceof HTMLElement ? el1.getBoundingClientRect() : el1
+    var r2 = el2 instanceof HTMLElement ? el2.getBoundingClientRect() : el2
     return (
         r1.top <= r2.top + r2.height && // r1 starts before r2 ends
         r1.top + r1.height >= r2.top && // r1 ends after r2 starts
