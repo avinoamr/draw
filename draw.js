@@ -75,6 +75,12 @@ class DrawBox extends HTMLElement {
         var selectBox = this._selectBox
         if (state === 'start') {
             var rect = this.getBoundingClientRect()
+            var drawEl = this.getAttribute('draw')
+            if (drawEl !== null) {
+                drawEl = document.createElement(drawEl || 'div')
+                this.appendChild(drawEl)
+            }
+
             selectBox._startTop = y - rect.top
             selectBox._startLeft = x - rect.left
             selectBox.style.top = selectBox._startTop + 'px'
