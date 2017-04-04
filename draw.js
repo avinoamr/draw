@@ -142,6 +142,11 @@ class DrawBox extends HTMLElement {
         if (ev.detail.state === 'start') {
             this.removeEventListener('mousemove', this.onMouseMove)
             this.classList.add('draw-box-no-select')
+
+            el._startTop = parseFloat(el.style.top)
+            el._startLeft = parseFloat(el.style.left)
+            el._startWidth = parseFloat(el.style.width)
+            el._startHeight = parseFloat(el.style.height)
         }
 
         this['on' + type[0].toUpperCase() + type.slice(1)].call(this, el, ev)
@@ -168,7 +173,14 @@ class DrawBox extends HTMLElement {
             el.style.left = (x - rect.left) + 'px'
             el.style.width = '0px'
             el.style.height = '0px'
+            el._startTop = parseFloat(el.style.top)
+            el._startLeft = parseFloat(el.style.left)
+            el._startWidth = parseFloat(el.style.width)
+            el._startHeight = parseFloat(el.style.height)
             this.appendChild(el)
+
+            this.onDrag(el, ev)
+            this.onResize(el, ev)
         }
 
         this.onReposition(el, ev)
@@ -195,11 +207,6 @@ class DrawBox extends HTMLElement {
 
     onDrag(el, ev) {
         var { dx, dy, state } = ev.detail
-        if (state === 'start') {
-            el._startTop = parseFloat(el.style.top)
-            el._startLeft = parseFloat(el.style.left)
-        }
-
         el.style.top = el._startTop + dy + 'px'
         el.style.left = el._startLeft + dx + 'px'
         el.update()
@@ -207,11 +214,6 @@ class DrawBox extends HTMLElement {
 
     onResize(el, ev) {
         var { dx, dy, state } = ev.detail
-        if (state === 'start') {
-            el._startWidth = parseFloat(el.style.width)
-            el._startHeight = parseFloat(el.style.height)
-        }
-
         el.style.width = el._startWidth + dx + 'px'
         el.style.height = el._startHeight + dy + 'px'
         el.update()
@@ -219,12 +221,6 @@ class DrawBox extends HTMLElement {
 
     onReposition(el, ev) {
         var { dx, dy, state } = ev.detail
-        if (state === 'start') {
-            el._startTop = parseFloat(el.style.top)
-            el._startLeft = parseFloat(el.style.left)
-            el._startWidth = parseFloat(el.style.width)
-            el._startHeight = parseFloat(el.style.height)
-        }
 
         // on negative deltas - the user drags from bottom-right to top-left.
         // reverse the logic such that it drags the start-position instead of
