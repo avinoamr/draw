@@ -85,7 +85,10 @@ class DrawBox extends HTMLElement {
         DrawBox.initTrackEvents(this)
         this.addEventListener('track', this.onTrack.bind(this, 'draw', selectBox))
         this.addEventListener('click', this.onClick)
+
         this.addEventListener('mousemove', this.onMouseMove)
+        this.addEventListener('drawbox-selected', this.onSelected)
+        this.addEventListener('drawbox-deselected', this.onDeselected)
 
         // enable keyboard events by making the drawbox focus-able
         this.setAttribute('tabindex', '0')
@@ -161,30 +164,14 @@ class DrawBox extends HTMLElement {
             }
 
             $bind(el, drawEl)
-            el._startTop = y - rect.top
-            el._startLeft = x - rect.left
-            el.style.top = el._startTop + 'px'
-            el.style.left = el._startLeft + 'px'
+            el.style.top = (y - rect.top) + 'px'
+            el.style.left = (x - rect.left) + 'px'
+            el.style.width = '0px'
+            el.style.height = '0px'
             this.appendChild(el)
         }
 
-        // on negative deltas - the user drags from bottom-right to top-left.
-        // reverse the logic such that it drags the start-position instead of
-        // the end-positing.
-        if (dx < 0) {
-            el.style.left = el._startLeft + dx + 'px'
-            dx *= -1
-        }
-
-        if (dy < 0) {
-            el.style.top = el._startTop + dy + 'px'
-            dy *= -1
-        }
-
-        // adjust the width and height
-        el.style.width = dx + 'px'
-        el.style.height = dy + 'px'
-        el.update()
+        this.onReposition(el, ev)
 
         // find intersections and select/deselect elements
         // TODO if it gets slow, we can consider a quadtree implementation.
@@ -230,6 +217,33 @@ class DrawBox extends HTMLElement {
         el.update()
     }
 
+    onReposition(el, ev) {
+        var { dx, dy, state } = ev.detail
+        if (state === 'start') {
+            el._startTop = parseFloat(el.style.top)
+            el._startLeft = parseFloat(el.style.left)
+            el._startWidth = parseFloat(el.style.width)
+            el._startHeight = parseFloat(el.style.height)
+        }
+
+        // on negative deltas - the user drags from bottom-right to top-left.
+        // reverse the logic such that it drags the start-position instead of
+        // the end-positing.
+        if (dx < 0) {
+            el.style.left = el._startLeft + dx + 'px'
+            dx *= -1
+        }
+
+        if (dy < 0) {
+            el.style.top = el._startTop + dy + 'px'
+            dy *= -1
+        }
+
+        el.style.width = el._startWidth + dx + 'px'
+        el.style.height = el._startHeight + dy + 'px'
+        el.update()
+    }
+
     select(child) {
         if (child._drawboxSelected || child._drawbox) {
             return // already selected
@@ -261,16 +275,22 @@ class DrawBox extends HTMLElement {
         DrawBox.initTrackEvents(resizer)
             .addEventListener('track', this.onTrack.bind(this, 'resize', selectBox))
 
-        this.selection.push(selectBox)
+        // fire the selected event
+        var ev = new Event('drawbox-selected', { bubbles: true })
+        child.dispatchEvent(ev)
     }
 
     deselect(child) {
-        if (child._drawboxSelected) {
-            var idx = this.selection.indexOf(child._drawboxSelected)
-            this.selection.splice(idx, 1)
-            this.removeChild(child._drawboxSelected)
-            child._drawboxSelected = null
+        if (!child._drawboxSelected) {
+            return
         }
+
+        this.removeChild(child._drawboxSelected)
+        child._drawboxSelected = null
+
+        // fire the selected event
+        var ev = new Event('drawbox-deselected', { bubbles: true })
+        child.dispatchEvent(ev)
     }
 
     selectAll() {
