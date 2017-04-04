@@ -83,7 +83,7 @@ class DrawBox extends HTMLElement {
 
         var selectBox = $create(`<div class='draw-box-selection'></div>`)
         DrawBox.initTrackEvents(this)
-        this.addEventListener('track', this.onTrack.bind(this, 'draw', selectBox))
+        this.addEventListener('track', this.onDraw.bind(this, selectBox))
         this.addEventListener('click', this.onClick)
 
         this.addEventListener('mousemove', this.onMouseMove)
@@ -138,14 +138,6 @@ class DrawBox extends HTMLElement {
         }
     }
 
-    onTrack(type, el, ev) {
-        if (ev.detail.state === 'start') {
-            el.resize(el.style)
-        }
-
-        this['on' + type[0].toUpperCase() + type.slice(1)].call(this, el, ev)
-    }
-
     onDraw(el, ev) {
         var { x, y, dx, dy, state } = ev.detail
         if (state === 'start') {
@@ -166,14 +158,16 @@ class DrawBox extends HTMLElement {
     }
 
     onDrag(el, ev) {
-        var { dx, dy } = ev.detail
+        var { dx, dy, state } = ev.detail
+        state === 'start' && (el.resize(el.style))
         el.style.top = el._startTop + dy + 'px'
         el.style.left = el._startLeft + dx + 'px'
         el.update()
     }
 
     onResize(el, ev) {
-        var { dx, dy } = ev.detail
+        var { dx, dy, state } = ev.detail
+        state === 'start' && (el.resize(el.style))
         el.style.width = el._startWidth + dx + 'px'
         el.style.height = el._startHeight + dy + 'px'
         el.update()
@@ -243,12 +237,12 @@ class DrawBox extends HTMLElement {
         // onDrag
         var dragger = selectBox.querySelector('.draw-box-dragger')
         DrawBox.initTrackEvents(dragger)
-            .addEventListener('track', this.onTrack.bind(this, 'drag', selectBox))
+            .addEventListener('track', this.onDrag.bind(this, selectBox))
 
         // onResize
         var resizer = selectBox.querySelector('.draw-box-resizer')
         DrawBox.initTrackEvents(resizer)
-            .addEventListener('track', this.onTrack.bind(this, 'resize', selectBox))
+            .addEventListener('track', this.onResize.bind(this, selectBox))
 
         // fire the selected event
         var ev = new Event('drawbox-selected', { bubbles: true })
