@@ -148,7 +148,13 @@ class DrawBox extends HTMLElement {
         }
 
         this.onInsert(el, ev)
-        this.onReposition(el, ev)
+
+        el.style.top = el._start.y + (dy < 0 ? dy : 0) + 'px'
+        el.style.left = el._start.x + (dx < 0 ? dx : 0) + 'px'
+        el.style.width = el._start.w + Math.abs(dx) + 'px'
+        el.style.height = el._start.h + Math.abs(dy) + 'px'
+        el.update()
+
         this.onSelect(el, ev)
 
         if (state === 'end') {
@@ -160,25 +166,16 @@ class DrawBox extends HTMLElement {
     onDrag(el, ev) {
         var { dx, dy, state } = ev.detail
         state === 'start' && (el.resize(el.style))
-        el.style.top = el._startTop + dy + 'px'
-        el.style.left = el._startLeft + dx + 'px'
+        el.style.top = el._start.y + dy + 'px'
+        el.style.left = el._start.x + dx + 'px'
         el.update()
     }
 
     onResize(el, ev) {
         var { dx, dy, state } = ev.detail
         state === 'start' && (el.resize(el.style))
-        el.style.width = el._startWidth + dx + 'px'
-        el.style.height = el._startHeight + dy + 'px'
-        el.update()
-    }
-
-    onReposition(el, ev) {
-        var { dx, dy } = ev.detail
-        el.style.top = el._startTop + (dy < 0 ? dy : 0) + 'px'
-        el.style.left = el._startLeft + (dx < 0 ? dx : 0) + 'px'
-        el.style.width = el._startWidth + Math.abs(dx) + 'px'
-        el.style.height = el._startHeight + Math.abs(dy) + 'px'
+        el.style.width = el._start.w + dx + 'px'
+        el.style.height = el._start.h + dy + 'px'
         el.update()
     }
 
@@ -312,10 +309,12 @@ function $create(innerHTML) {
     return Object.assign(container.children[0], {
         _drawbox: true,
         resize: function(rect) {
-            this._startTop = parseFloat(rect.top) || 0
-            this._startLeft = parseFloat(rect.left) || 0
-            this._startWidth = parseFloat(rect.width) || 0
-            this._startHeight = parseFloat(rect.height) || 0
+            this._start = {
+                x: parseFloat(rect.left) || 0,
+                y: parseFloat(rect.top) || 0,
+                w: parseFloat(rect.width) || 0,
+                h: parseFloat(rect.height) || 0
+            }
         }
     })
 }
