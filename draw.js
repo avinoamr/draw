@@ -221,22 +221,10 @@ class DrawBox extends HTMLElement {
 
     onReposition(el, ev) {
         var { dx, dy, state } = ev.detail
-
-        // on negative deltas - the user drags from bottom-right to top-left.
-        // reverse the logic such that it drags the start-position instead of
-        // the end-positing.
-        if (dx < 0) {
-            el.style.left = el._startLeft + dx + 'px'
-            dx *= -1
-        }
-
-        if (dy < 0) {
-            el.style.top = el._startTop + dy + 'px'
-            dy *= -1
-        }
-
-        el.style.width = el._startWidth + dx + 'px'
-        el.style.height = el._startHeight + dy + 'px'
+        el.style.top = el._startTop + (dy < 0 ? dy : 0) + 'px'
+        el.style.left = el._startLeft + (dx < 0 ? dx : 0) + 'px'
+        el.style.width = el._startWidth + Math.abs(dx) + 'px'
+        el.style.height = el._startHeight + Math.abs(dy) + 'px'
         el.update()
     }
 
