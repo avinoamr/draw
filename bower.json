@@ -1,11 +1,11 @@
 {
-  "name": "draw",
-  "homepage": "https://github.com/avinoamr/draw",
+  "name": "draw-box",
+  "homepage": "https://github.com/avinoamr/draw-box",
   "authors": [
     "Roi Avinoam <avinoamr@gmail.com>"
   ],
   "description": "Draw HTML elements",
-  "main": "draw.js",
+  "main": "draw-box.js",
   "keywords": [
     "draw",
     "html",
