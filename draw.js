@@ -18,6 +18,7 @@ draw-box {
 
 .draw-box-selection {
     position: absolute;
+    display: none;
     border: 1px solid silver;
 }
 
@@ -89,7 +90,47 @@ class DrawBox extends HTMLElement {
             .on('keyup', this.onKeyUp)
             .on('drawbox-drag', this.onDrag)
             .on('drawbox-resize', this.onResize)
-            .on('track', this.onTrack)
+            .on('drawbox-draw', this.onDraw)
+            .on('track', function (ev) {
+                var { x, y, state } = ev.detail
+                var drawMode = this.hasAttribute('draw')
+                if (state === 'start' && drawMode) {
+                    var rect = this.getBoundingClientRect()
+                    var drawEl = this.getAttribute('draw') || 'div'
+                    this._drawEl = document.createElement(drawEl)
+                    this._drawEl.style.display = 'block';
+                    this._drawEl.style.position = 'absolute'
+                    this._drawEl.style.top = y - rect.top + 'px'
+                    this._drawEl.style.left = x - rect.left + 'px'
+                    this._drawEl.style.width = '0px'
+                    this._drawEl.style.height = '0px'
+                    this.appendChild(this._drawEl)
+                    this.select(this._drawEl)
+                }
+
+                if (state === 'start' && !drawMode) {
+                    var rect = this.getBoundingClientRect()
+                    var el = ev.target._selectBox
+                    el.style.display = 'block';
+                    el.style.top = y - rect.top + 'px'
+                    el.style.left = x - rect.left + 'px'
+                    el.style.width = '0px'
+                    el.style.height = '0px'
+                    this.appendChild(el)
+                    $bind(el, null)
+                }
+
+                if (this._drawEl) {
+                    DrawBox.refire('drawbox-draw', this._drawEl)(ev)
+                } else {
+                    this.onSelectx(ev)
+                }
+
+                if (state === 'end') {
+                    this._drawEl = null
+                    this._selectBox.style.display = 'none'
+                }
+            })
     }
 
     // apply the 'draw-box-hover' class to selected elements when the mouse
@@ -114,7 +155,7 @@ class DrawBox extends HTMLElement {
     onClick(ev) {
         if (ev.target === this) {
             // de-select all on background click.
-            this.deselectAll()
+            // this.deselectAll()
         } else {
             // find the selected element by walking up the ancestors tree until
             // we find the immediate child of this draw-box to select.
@@ -164,6 +205,19 @@ class DrawBox extends HTMLElement {
     onDraw(ev) {
         var el = ev.target._selectBox
         var { x, y, dx, dy, state } = ev.detail
+        state === 'start' && (el.resize(el.style))
+
+        el.style.top = el._start.y + (dy < 0 ? dy : 0) + 'px'
+        el.style.left = el._start.x + (dx < 0 ? dx : 0) + 'px'
+        el.style.width = el._start.w + Math.abs(dx) + 'px'
+        el.style.height = el._start.h + Math.abs(dy) + 'px'
+        el.update()
+    }
+
+    onSelectx(ev) {
+        var el = ev.target._selectBox
+        var { x, y, dx, dy, state } = ev.detail
+        state === 'start' && (el.resize(el.style))
 
         el.style.top = el._start.y + (dy < 0 ? dy : 0) + 'px'
         el.style.left = el._start.x + (dx < 0 ? dx : 0) + 'px'
