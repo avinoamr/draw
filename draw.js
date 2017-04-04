@@ -159,38 +159,19 @@ class DrawBox extends HTMLElement {
 
     onDraw(el, ev) {
         var { x, y, dx, dy, state } = ev.detail
-        var drawEl = this.getAttribute('draw')
         if (state === 'start') {
             var rect = this.getBoundingClientRect()
-            if (drawEl !== null) {
-                drawEl = document.createElement(drawEl || 'div')
-                drawEl.style.position = 'absolute'
-                this.appendChild(drawEl)
-            }
-
-            $bind(el, drawEl)
             el._startTop = y - rect.top
             el._startLeft = x - rect.left
             el._startWidth = 0
             el._startHeight = 0
             this.appendChild(el)
+            $bind(el, null)
         }
 
+        this.onInsert(el, ev)
         this.onReposition(el, ev)
-
-        // find intersections and select/deselect elements
-        // TODO if it gets slow, we can consider a quadtree implementation.
-        var children = drawEl ? [] : this.children
-        for (var i = 0; i < children.length; i += 1) {
-            var child = children[i]
-            if (child._drawbox) {
-                continue
-            } else if (intersect(el, child)) {
-                this.select(child)
-            } else {
-                this.deselect(child)
-            }
-        }
+        this.onSelect(el, ev)
 
         if (state === 'end') {
             this.removeChild(el)
@@ -199,26 +180,57 @@ class DrawBox extends HTMLElement {
     }
 
     onDrag(el, ev) {
-        var { dx, dy, state } = ev.detail
+        var { dx, dy } = ev.detail
         el.style.top = el._startTop + dy + 'px'
         el.style.left = el._startLeft + dx + 'px'
         el.update()
     }
 
     onResize(el, ev) {
-        var { dx, dy, state } = ev.detail
+        var { dx, dy } = ev.detail
         el.style.width = el._startWidth + dx + 'px'
         el.style.height = el._startHeight + dy + 'px'
         el.update()
     }
 
     onReposition(el, ev) {
-        var { dx, dy, state } = ev.detail
+        var { dx, dy } = ev.detail
         el.style.top = el._startTop + (dy < 0 ? dy : 0) + 'px'
         el.style.left = el._startLeft + (dx < 0 ? dx : 0) + 'px'
         el.style.width = el._startWidth + Math.abs(dx) + 'px'
         el.style.height = el._startHeight + Math.abs(dy) + 'px'
         el.update()
+    }
+
+    onInsert(el, ev) {
+        if (ev.detail.state !== 'start' || !this.hasAttribute('draw')) {
+            return
+        }
+
+        var drawEl = this.getAttribute('draw') || 'div'
+        var drawEl = document.createElement(drawEl)
+        drawEl.style.position = 'absolute'
+        this.appendChild(drawEl)
+        $bind(el, drawEl)
+    }
+
+    onSelect(el) {
+        if (this.hasAttribute('draw')) {
+            return
+        }
+
+        // find intersections and select/deselect elements
+        // TODO if it gets slow, we can consider a quadtree implementation.
+        for (var i = 0; i < this.children.length; i += 1) {
+            var child = this.children[i]
+            if (child._drawbox) {
+                continue
+            } else if (intersect(el, child)) {
+                this.select(child)
+            } else {
+                this.deselect(child)
+            }
+        }
     }
 
     select(child) {
