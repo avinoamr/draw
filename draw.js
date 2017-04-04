@@ -86,10 +86,14 @@ class DrawBox extends HTMLElement {
         this.addEventListener('mousemove', this.onMouseMove)
     }
 
+    // apply the 'draw-box-hover' class to selected elements when the mouse
+    // moves over them. We can't use CSS :hover or mouse-enter/leave events
+    // because the selection box has `pointer-events: none`. The latter is
+    // required in order to allow mouse events to pierce through the select box
+    // and reach the underlying user-element.
     onMouseMove(ev) {
         var { x, y } = ev
         var pos = { left: x, top: y, width: 1, height: 1 }
-
         var selected = []
         for (var i = 0; i < this.children.length ; i += 1) {
             var child = this.children[i]
@@ -114,6 +118,7 @@ class DrawBox extends HTMLElement {
             while (target.parentNode !== this) {
                 target = target.parentNode
             }
+
             this.select(target)
         }
     }
@@ -214,7 +219,7 @@ class DrawBox extends HTMLElement {
     }
 
     select(child) {
-        if (child._drawboxSelected) {
+        if (child._drawboxSelected || child._drawbox) {
             return // already selected
         }
 
