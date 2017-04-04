@@ -79,21 +79,17 @@ class DrawBox extends HTMLElement {
         var s = `<style id='draw-box-styles'>` + DrawBox.styles + `</style>`
         this.parentNode.insertBefore($create(s), this)
 
-        this.selection = []
-
-        var selectBox = $create(`<div class='draw-box-selection'></div>`)
-
-        DrawBox.initTrackEvents(this)
-        this.addEventListener('track', this.onDraw.bind(this, selectBox))
-        this.addEventListener('drawbox-drag', this.onDrag)
-        this.addEventListener('drawbox-resize', this.onResize)
-
-        this.addEventListener('click', this.onClick)
-        this.addEventListener('mousemove', this.onMouseMove)
-
         // enable keyboard events by making the drawbox focus-able
-        this.setAttribute('tabindex', '0')
-        this.addEventListener('keyup', this.onKeyUp)
+        this.tabindex = 0
+        this.selection = []
+        this._selectBox = $create(`<div class='draw-box-selection'></div>`)
+        DrawBox.initTrackEvents(this)
+            .on('click', this.onClick)
+            .on('mousemove', this.onMouseMove)
+            .on('keyup', this.onKeyUp)
+            .on('drawbox-drag', this.onDrag)
+            .on('drawbox-resize', this.onResize)
+            .on('track', this.onDraw)
     }
 
     // apply the 'draw-box-hover' class to selected elements when the mouse
@@ -139,7 +135,8 @@ class DrawBox extends HTMLElement {
         }
     }
 
-    onDraw(el, ev) {
+    onDraw(ev) {
+        var el = ev.target._selectBox
         var { x, y, dx, dy, state } = ev.detail
         if (state === 'start') {
             var rect = this.getBoundingClientRect()
@@ -275,6 +272,10 @@ class DrawBox extends HTMLElement {
             selectBox.delete()
         })
         this.selection = []
+    }
+
+    on() {
+        return this.addEventListener.apply(this, arguments), this
     }
 
     static refire(name, el) {
