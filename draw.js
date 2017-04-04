@@ -89,7 +89,7 @@ class DrawBox extends HTMLElement {
             .on('keyup', this.onKeyUp)
             .on('drawbox-drag', this.onDrag)
             .on('drawbox-resize', this.onResize)
-            .on('track', this.onDraw)
+            .on('track', this.onTrack)
     }
 
     // apply the 'draw-box-hover' class to selected elements when the mouse
@@ -135,9 +135,9 @@ class DrawBox extends HTMLElement {
         }
     }
 
-    onDraw(ev) {
+    onTrack(ev) {
         var el = ev.target._selectBox
-        var { x, y, dx, dy, state } = ev.detail
+        var { x, y, state } = ev.detail
         if (state === 'start') {
             var rect = this.getBoundingClientRect()
             el.resize({ left: x - rect.left, top: y - rect.top })
@@ -145,20 +145,31 @@ class DrawBox extends HTMLElement {
             $bind(el, null)
         }
 
-        this.onInsert(el, ev)
+        if (state === 'start' && this.hasAttribute('draw')) {
+            var drawEl = this.getAttribute('draw') || 'div'
+            var drawEl = document.createElement(drawEl)
+            drawEl.style.position = 'absolute'
+            this.appendChild(drawEl)
+            $bind(el, drawEl)
+        }
+
+        this.onDraw(ev)
+        this.onSelect(el, ev)
+
+        if (state === 'end') {
+            this.removeChild(el)
+        }
+    }
+
+    onDraw(ev) {
+        var el = ev.target._selectBox
+        var { x, y, dx, dy, state } = ev.detail
 
         el.style.top = el._start.y + (dy < 0 ? dy : 0) + 'px'
         el.style.left = el._start.x + (dx < 0 ? dx : 0) + 'px'
         el.style.width = el._start.w + Math.abs(dx) + 'px'
         el.style.height = el._start.h + Math.abs(dy) + 'px'
         el.update()
-
-        this.onSelect(el, ev)
-
-        if (state === 'end') {
-            this.removeChild(el)
-            this.removeAttribute('draw') // auto-disable draw.
-        }
     }
 
     onDrag(ev) {
