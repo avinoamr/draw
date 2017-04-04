@@ -140,31 +140,17 @@ class DrawBox extends HTMLElement {
 
     onTrack(type, el, ev) {
         if (ev.detail.state === 'start') {
-            this.removeEventListener('mousemove', this.onMouseMove)
-            this.classList.add('draw-box-no-select')
-
-            el._startTop = parseFloat(el.style.top)
-            el._startLeft = parseFloat(el.style.left)
-            el._startWidth = parseFloat(el.style.width)
-            el._startHeight = parseFloat(el.style.height)
+            el.resize(el.style)
         }
 
         this['on' + type[0].toUpperCase() + type.slice(1)].call(this, el, ev)
-
-        if (ev.detail.state === 'end') {
-            this.classList.remove('draw-box-no-select')
-            this.addEventListener('mousemove', this.onMouseMove)
-        }
     }
 
     onDraw(el, ev) {
         var { x, y, dx, dy, state } = ev.detail
         if (state === 'start') {
             var rect = this.getBoundingClientRect()
-            el._startTop = y - rect.top
-            el._startLeft = x - rect.left
-            el._startWidth = 0
-            el._startHeight = 0
+            el.resize({ left: x - rect.left, top: y - rect.top })
             this.appendChild(el)
             $bind(el, null)
         }
@@ -329,7 +315,15 @@ function intersect(el1, el2) {
 function $create(innerHTML) {
     var container = document.createElement('div')
     container.innerHTML = innerHTML
-    return Object.assign(container.children[0], { _drawbox: true })
+    return Object.assign(container.children[0], {
+        _drawbox: true,
+        resize: function(rect) {
+            this._startTop = parseFloat(rect.top) || 0
+            this._startLeft = parseFloat(rect.left) || 0
+            this._startWidth = parseFloat(rect.width) || 0
+            this._startHeight = parseFloat(rect.height) || 0
+        }
+    })
 }
 
 function $bind(el, target) {
