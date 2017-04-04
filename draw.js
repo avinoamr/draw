@@ -169,18 +169,11 @@ class DrawBox extends HTMLElement {
             }
 
             $bind(el, drawEl)
-            el.style.top = (y - rect.top) + 'px'
-            el.style.left = (x - rect.left) + 'px'
-            el.style.width = '0px'
-            el.style.height = '0px'
-            el._startTop = parseFloat(el.style.top)
-            el._startLeft = parseFloat(el.style.left)
-            el._startWidth = parseFloat(el.style.width)
-            el._startHeight = parseFloat(el.style.height)
+            el._startTop = y - rect.top
+            el._startLeft = x - rect.left
+            el._startWidth = 0
+            el._startHeight = 0
             this.appendChild(el)
-
-            this.onDrag(el, ev)
-            this.onResize(el, ev)
         }
 
         this.onReposition(el, ev)
