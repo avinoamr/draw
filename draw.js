@@ -4,6 +4,7 @@ var styles = `
 draw-box {
     display: block;
     position: relative;
+    outline: none; /* due to tabindex */
 }
 
 .draw-box-no-select {
@@ -78,12 +79,17 @@ class DrawBox extends HTMLElement {
         var s = `<style id='draw-box-styles'>` + DrawBox.styles + `</style>`
         this.parentNode.insertBefore($create(s), this)
 
-        var selectBox = $create(`<div class='draw-box-selection'></div>`)
+        this.selection = []
 
+        var selectBox = $create(`<div class='draw-box-selection'></div>`)
         DrawBox.initTrackEvents(this)
         this.addEventListener('track', this.onTrack.bind(this, 'draw', selectBox))
         this.addEventListener('click', this.onClick)
         this.addEventListener('mousemove', this.onMouseMove)
+
+        // enable keyboard events by making the drawbox focus-able
+        this.setAttribute('tabindex', '0')
+        this.addEventListener('keyup', this.onKeyUp)
     }
 
     // apply the 'draw-box-hover' class to selected elements when the mouse
@@ -108,9 +114,7 @@ class DrawBox extends HTMLElement {
     onClick(ev) {
         if (ev.target === this) {
             // de-select all on background click.
-            Array.prototype.forEach.call(this.children, function (child) {
-                this.deselect(child)
-            }, this)
+            this.deselectAll()
         } else {
             // find the selected element by walking up the ancestors tree until
             // we find the immediate child of this draw-box to select.
@@ -120,6 +124,14 @@ class DrawBox extends HTMLElement {
             }
 
             this.select(target)
+        }
+    }
+
+    onKeyUp(ev) {
+        if (ev.ctrlKey && ev.keyCode === 65) { // Ctrl+A
+            this.selectAll()
+        } else if (ev.keyCode === 8) { // Del
+            this.deleteSelected()
         }
     }
 
@@ -248,13 +260,32 @@ class DrawBox extends HTMLElement {
         var resizer = selectBox.querySelector('.draw-box-resizer')
         DrawBox.initTrackEvents(resizer)
             .addEventListener('track', this.onTrack.bind(this, 'resize', selectBox))
+
+        this.selection.push(selectBox)
     }
 
     deselect(child) {
         if (child._drawboxSelected) {
+            var idx = this.selection.indexOf(child._drawboxSelected)
+            this.selection.splice(idx, 1)
             this.removeChild(child._drawboxSelected)
             child._drawboxSelected = null
         }
+    }
+
+    selectAll() {
+        Array.prototype.forEach.call(this.children, this.select.bind(this))
+    }
+
+    deselectAll() {
+        Array.prototype.forEach.call(this.children, this.deselect.bind(this))
+    }
+
+    deleteSelected() {
+        this.selection.forEach(function (selectBox) {
+            selectBox.delete()
+        })
+        this.selection = []
     }
 
     static get styles() {
@@ -303,6 +334,11 @@ function $bind(el, target) {
         target.style.width = this.style.width
         target.style.height = this.style.height
         return this
+    }
+
+    el.delete = function () {
+        target.parentNode.removeChild(target)
+        this.parentNode.removeChild(this)
     }
 
     return el
