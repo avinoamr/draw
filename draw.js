@@ -82,13 +82,14 @@ class DrawBox extends HTMLElement {
         this.selection = []
 
         var selectBox = $create(`<div class='draw-box-selection'></div>`)
+
         DrawBox.initTrackEvents(this)
         this.addEventListener('track', this.onDraw.bind(this, selectBox))
-        this.addEventListener('click', this.onClick)
+        this.addEventListener('drawbox-drag', this.onDrag)
+        this.addEventListener('drawbox-resize', this.onResize)
 
+        this.addEventListener('click', this.onClick)
         this.addEventListener('mousemove', this.onMouseMove)
-        this.addEventListener('drawbox-selected', this.onSelected)
-        this.addEventListener('drawbox-deselected', this.onDeselected)
 
         // enable keyboard events by making the drawbox focus-able
         this.setAttribute('tabindex', '0')
@@ -163,7 +164,8 @@ class DrawBox extends HTMLElement {
         }
     }
 
-    onDrag(el, ev) {
+    onDrag(ev) {
+        var el = ev.target._selectBox
         var { dx, dy, state } = ev.detail
         state === 'start' && (el.resize(el.style))
         el.style.top = el._start.y + dy + 'px'
@@ -171,7 +173,8 @@ class DrawBox extends HTMLElement {
         el.update()
     }
 
-    onResize(el, ev) {
+    onResize(ev) {
+        var el = ev.target._selectBox
         var { dx, dy, state } = ev.detail
         state === 'start' && (el.resize(el.style))
         el.style.width = el._start.w + dx + 'px'
@@ -211,7 +214,7 @@ class DrawBox extends HTMLElement {
     }
 
     select(child) {
-        if (child._drawboxSelected || child._drawbox) {
+        if (child._selectBox || child._drawbox) {
             return // already selected
         }
 
@@ -228,18 +231,18 @@ class DrawBox extends HTMLElement {
         selectBox.style.width = child.offsetWidth + 'px'
         selectBox.style.height = child.offsetHeight + 'px'
 
-        child._drawboxSelected = selectBox.update()
+        child._selectBox = selectBox.update()
         this.appendChild(selectBox)
 
         // onDrag
         var dragger = selectBox.querySelector('.draw-box-dragger')
         DrawBox.initTrackEvents(dragger)
-            .addEventListener('track', this.onDrag.bind(this, selectBox))
+            .addEventListener('track', DrawBox.refire('drawbox-drag', child))
 
         // onResize
         var resizer = selectBox.querySelector('.draw-box-resizer')
         DrawBox.initTrackEvents(resizer)
-            .addEventListener('track', this.onResize.bind(this, selectBox))
+            .addEventListener('track', DrawBox.refire('drawbox-resize', child))
 
         // fire the selected event
         var ev = new Event('drawbox-selected', { bubbles: true })
@@ -247,12 +250,12 @@ class DrawBox extends HTMLElement {
     }
 
     deselect(child) {
-        if (!child._drawboxSelected) {
+        if (!child._selectBox) {
             return
         }
 
-        this.removeChild(child._drawboxSelected)
-        child._drawboxSelected = null
+        this.removeChild(child._selectBox)
+        child._selectBox = null
 
         // fire the selected event
         var ev = new Event('drawbox-deselected', { bubbles: true })
@@ -272,6 +275,14 @@ class DrawBox extends HTMLElement {
             selectBox.delete()
         })
         this.selection = []
+    }
+
+    static refire(name, el) {
+        return function (ev) {
+            var { detail } = ev
+            ev = Object.assign(new Event(name, { bubbles: true }), { detail })
+            el.dispatchEvent(ev)
+        }
     }
 
     static get styles() {
