@@ -79,6 +79,12 @@ class DrawBox extends HTMLElement {
         var s = `<style id='draw-box-styles'>` + DrawBox.styles + `</style>`
         this.parentNode.insertBefore($create(s), this)
 
+        // disable user text-selection
+        function textSelect(ev) {
+            var { state } = ev.detail
+            this.classList.toggle('draw-box-no-select', state !== 'end')
+        }
+
         // enable keyboard events by making the drawbox focus-able
         this.tabIndex = 0
         this.selection = []
@@ -87,10 +93,10 @@ class DrawBox extends HTMLElement {
         DrawBox.initTrackEvents(this)
             .on('mousedown', this.onMouseDown)
             .on('keyup', this.onKeyUp)
-            .on('drawbox-drag', this.onDrag)
-            .on('drawbox-resize', this.onResize)
-            .on('drawbox-draw', this.onDraw)
-            .on('track', function (ev) {
+            .on('drawbox-drag', textSelect, this.onDrag)
+            .on('drawbox-resize', textSelect, this.onResize)
+            .on('drawbox-draw', textSelect, this.onDraw)
+            .on('track', textSelect, function (ev) {
                 var { x, y, state } = ev.detail
                 if (state === 'start') {
                     this.fireDraw = null
@@ -249,8 +255,11 @@ class DrawBox extends HTMLElement {
         })
     }
 
-    on() {
-        return this.addEventListener.apply(this, arguments), this
+    on(name /*, listeners... */) {
+        for (var i = 1 ; i < arguments.length; i += 1) {
+            this.addEventListener(name, arguments[i])
+        }
+        return this
     }
 
     static refire(name, el) {
