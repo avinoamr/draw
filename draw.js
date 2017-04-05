@@ -80,7 +80,7 @@ class DrawBox extends HTMLElement {
         this.parentNode.insertBefore($create(s), this)
 
         // enable keyboard events by making the drawbox focus-able
-        this.tabindex = 0
+        this.tabIndex = 0
         this.selection = []
         this._selectBox = $create(`<div class='draw-box-selection'></div>`)
         $bind(this._selectBox, null)
@@ -242,10 +242,11 @@ class DrawBox extends HTMLElement {
     }
 
     deleteSelected() {
-        this.selection.forEach(function (selectBox) {
-            selectBox.delete()
+        Array.prototype.forEach.call(this.children, function (el) {
+            if (el._selectBox) {
+                el._selectBox.delete()
+            }
         })
-        this.selection = []
     }
 
     on() {
