@@ -68,6 +68,12 @@ class DrawBox extends HTMLElement {
     }
 
     connectedCallback() {
+        if (this._inited) {
+            return
+        }
+
+        this._inited = true
+
         // we use inject the style element adjcent to the <draw-box> instead of
         // on the <head> element because the <draw-box> element might be used
         // within a shadow-dom of another component, so we'd like to have the
@@ -125,49 +131,6 @@ class DrawBox extends HTMLElement {
             })
     }
 
-    // apply the 'draw-box-hover' class to selected elements when the mouse
-    // moves over them. We can't use CSS :hover or mouse-enter/leave events
-    // because the selection box has `pointer-events: none`. The latter is
-    // required in order to allow mouse events to pierce through the select box
-    // and reach the underlying user-element.
-    onMouseMove(ev) {
-        var { x, y } = ev
-        var pos = { left: x, top: y, width: 1, height: 1 }
-        var selected = []
-        for (var i = 0; i < this.children.length ; i += 1) {
-            var child = this.children[i]
-            if (!child._drawbox) {
-                continue
-            }
-
-            child.classList.toggle('draw-box-hover', intersect(pos, child))
-        }
-    }
-
-    onClick(ev) {
-        if (ev.target === this) {
-            // de-select all on background click.
-            // this.deselectAll()
-        } else {
-            // find the selected element by walking up the ancestors tree until
-            // we find the immediate child of this draw-box to select.
-            var target = ev.target
-            while (target.parentNode !== this) {
-                target = target.parentNode
-            }
-
-            this.select(target)
-        }
-    }
-
-    onKeyUp(ev) {
-        if (ev.ctrlKey && ev.keyCode === 65) { // Ctrl+A
-            this.selectAll()
-        } else if (ev.keyCode === 8) { // Del
-            this.deleteSelected()
-        }
-    }
-
     onDrag(ev) {
         var el = ev.target._selectBox
         var { dx, dy, state } = ev.detail
@@ -213,6 +176,49 @@ class DrawBox extends HTMLElement {
             } else {
                 this.deselect(child)
             }
+        }
+    }
+
+    // apply the 'draw-box-hover' class to selected elements when the mouse
+    // moves over them. We can't use CSS :hover or mouse-enter/leave events
+    // because the selection box has `pointer-events: none`. The latter is
+    // required in order to allow mouse events to pierce through the select box
+    // and reach the underlying user-element.
+    onMouseMove(ev) {
+        var { x, y } = ev
+        var pos = { left: x, top: y, width: 1, height: 1 }
+        var selected = []
+        for (var i = 0; i < this.children.length ; i += 1) {
+            var child = this.children[i]
+            if (!child._drawbox) {
+                continue
+            }
+
+            child.classList.toggle('draw-box-hover', intersect(pos, child))
+        }
+    }
+
+    onClick(ev) {
+        if (ev.target === this) {
+            // de-select all on background click.
+            // this.deselectAll()
+        } else {
+            // find the selected element by walking up the ancestors tree until
+            // we find the immediate child of this draw-box to select.
+            var target = ev.target
+            while (target.parentNode !== this) {
+                target = target.parentNode
+            }
+
+            this.select(target)
+        }
+    }
+
+    onKeyUp(ev) {
+        if (ev.ctrlKey && ev.keyCode === 65) { // Ctrl+A
+            this.selectAll()
+        } else if (ev.keyCode === 8) { // Del
+            this.deleteSelected()
         }
     }
 
