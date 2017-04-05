@@ -94,58 +94,28 @@ class DrawBox extends HTMLElement {
             .on('drawbox-draw', this.onDraw)
             .on('track', function (ev) {
                 var { x, y, state } = ev.detail
-                var drawMode = this.hasAttribute('draw')
                 if (state === 'start') {
-                    var rect = this.getBoundingClientRect()
+                    this._rect = this.getBoundingClientRect()
                     var el = ev.target._selectBox
-                    if (drawMode) {
+                    this._drawEl = null
+                    if (this.hasAttribute('draw')) {
                         el = document.createElement(this.getAttribute('draw'))
                         this._drawEl = el
                     }
 
                     el.style.display = 'block';
                     el.style.position = 'absolute'
-                    el.style.top = y - rect.top + 'px'
-                    el.style.left = x - rect.left + 'px'
-                    el.style.width = '0px'
-                    el.style.height = '0px'
                     this.appendChild(el)
                     this.select(el)
-
                 }
 
-
-                // if (state === 'start' && drawMode) {
-                //     var rect = this.getBoundingClientRect()
-                //     var drawEl = this.getAttribute('draw') || 'div'
-                //     this._drawEl = document.createElement(drawEl)
-                //     this._drawEl.style.display = 'block';
-                //     this._drawEl.style.position = 'absolute'
-                //     this._drawEl.style.top = y - rect.top + 'px'
-                //     this._drawEl.style.left = x - rect.left + 'px'
-                //     this._drawEl.style.width = '0px'
-                //     this._drawEl.style.height = '0px'
-                //     this.appendChild(this._drawEl)
-                //     this.select(this._drawEl)
-                //
-                // }
-
-                // if (state === 'start' && !drawMode) {
-                //     var rect = this.getBoundingClientRect()
-                //     var el = ev.target._selectBox
-                //     el.style.display = 'block';
-                //     el.style.top = y - rect.top + 'px'
-                //     el.style.left = x - rect.left + 'px'
-                //     el.style.width = '0px'
-                //     el.style.height = '0px'
-                //     this.appendChild(el)
-                //     $bind(el, null)
-                // }
+                ev.detail.x -= this._rect.left
+                ev.detail.y -= this._rect.top
 
                 if (this._drawEl) {
                     DrawBox.refire('drawbox-draw', this._drawEl)(ev)
                 } else {
-                    this.onSelectx(ev)
+                    this.onSelect(ev)
                 }
 
                 if (state === 'end') {
@@ -198,56 +168,6 @@ class DrawBox extends HTMLElement {
         }
     }
 
-    onTrack(ev) {
-        var el = ev.target._selectBox
-        var { x, y, state } = ev.detail
-        if (state === 'start') {
-            var rect = this.getBoundingClientRect()
-            el.resize({ left: x - rect.left, top: y - rect.top })
-            this.appendChild(el)
-            $bind(el, null)
-        }
-
-        if (state === 'start' && this.hasAttribute('draw')) {
-            var drawEl = this.getAttribute('draw') || 'div'
-            var drawEl = document.createElement(drawEl)
-            drawEl.style.position = 'absolute'
-            this.appendChild(drawEl)
-            $bind(el, drawEl)
-        }
-
-        this.onDraw(ev)
-        this.onSelect(el, ev)
-
-        if (state === 'end') {
-            this.removeChild(el)
-        }
-    }
-
-    onDraw(ev) {
-        var el = ev.target._selectBox
-        var { x, y, dx, dy, state } = ev.detail
-        state === 'start' && (el.resize(el.style))
-
-        el.style.top = el._start.y + (dy < 0 ? dy : 0) + 'px'
-        el.style.left = el._start.x + (dx < 0 ? dx : 0) + 'px'
-        el.style.width = el._start.w + Math.abs(dx) + 'px'
-        el.style.height = el._start.h + Math.abs(dy) + 'px'
-        el.update()
-    }
-
-    onSelectx(ev) {
-        var el = ev.target._selectBox
-        var { x, y, dx, dy, state } = ev.detail
-        state === 'start' && (el.resize(el.style))
-
-        el.style.top = el._start.y + (dy < 0 ? dy : 0) + 'px'
-        el.style.left = el._start.x + (dx < 0 ? dx : 0) + 'px'
-        el.style.width = el._start.w + Math.abs(dx) + 'px'
-        el.style.height = el._start.h + Math.abs(dy) + 'px'
-        el.update()
-    }
-
     onDrag(ev) {
         var el = ev.target._selectBox
         var { dx, dy, state } = ev.detail
@@ -266,25 +186,24 @@ class DrawBox extends HTMLElement {
         el.update()
     }
 
-    onInsert(el, ev) {
-        if (ev.detail.state !== 'start' || !this.hasAttribute('draw')) {
-            return
-        }
+    onDraw(ev) {
+        var el = ev.target._selectBox
+        var { x, y, dx, dy, state } = ev.detail
+        state === 'start' && (el.resize({ left: x, top: y }))
 
-        var drawEl = this.getAttribute('draw') || 'div'
-        var drawEl = document.createElement(drawEl)
-        drawEl.style.position = 'absolute'
-        this.appendChild(drawEl)
-        $bind(el, drawEl)
+        el.style.top = el._start.y + (dy < 0 ? dy : 0) + 'px'
+        el.style.left = el._start.x + (dx < 0 ? dx : 0) + 'px'
+        el.style.width = el._start.w + Math.abs(dx) + 'px'
+        el.style.height = el._start.h + Math.abs(dy) + 'px'
+        el.update()
     }
 
-    onSelect(el) {
-        if (this.hasAttribute('draw')) {
-            return
-        }
+    onSelect(ev) {
+        this.onDraw(ev)
 
         // find intersections and select/deselect elements
         // TODO if it gets slow, we can consider a quadtree implementation.
+        var el = ev.target._selectBox
         for (var i = 0; i < this.children.length; i += 1) {
             var child = this.children[i]
             if (child._drawbox) {
