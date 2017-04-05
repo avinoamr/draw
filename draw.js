@@ -92,7 +92,7 @@ class DrawBox extends HTMLElement {
         this._selectBox = $create(`<div class='draw-box-selection'></div>`)
         $bind(this._selectBox, null)
         DrawBox.initTrackEvents(this)
-            .on('click', this.onClick)
+            .on('mousedown', this.onMouseDown)
             .on('mousemove', this.onMouseMove)
             .on('keyup', this.onKeyUp)
             .on('drawbox-drag', this.onDrag)
@@ -174,8 +174,7 @@ class DrawBox extends HTMLElement {
     // required in order to allow mouse events to pierce through the select box
     // and reach the underlying user-element.
     onMouseMove(ev) {
-        var { x, y } = ev
-        var pos = { left: x, top: y, width: 1, height: 1 }
+        var pos = { left: ev.x, top: ev.y, width: 1, height: 1 }
         var selected = []
         for (var i = 0; i < this.children.length ; i += 1) {
             var child = this.children[i]
@@ -187,10 +186,10 @@ class DrawBox extends HTMLElement {
         }
     }
 
-    onClick(ev) {
+    onMouseDown(ev) {
         if (ev.target === this) {
             // de-select all on background click.
-            // this.deselectAll()
+            this.deselectAll()
         } else {
             // find the selected element by walking up the ancestors tree until
             // we find the immediate child of this draw-box to select.
