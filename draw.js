@@ -31,7 +31,6 @@ draw-box {
 
 .draw-box-dragger {
     position: absolute;
-    display: none;
     width: 10px;
     height: 10px;
     top: -5px;
@@ -43,7 +42,6 @@ draw-box {
 
 .draw-box-resizer {
     position: absolute;
-    display: none;
     box-sizing: border-box;
     width: 10px;
     height: 10px;
@@ -54,11 +52,6 @@ draw-box {
     border-left: none;
     cursor: nwse-resize;
     pointer-events: auto;
-}
-
-.draw-box-hover .draw-box-dragger,
-.draw-box-hover .draw-box-resizer {
-    display: block
 }
 `
 
@@ -93,7 +86,6 @@ class DrawBox extends HTMLElement {
         $bind(this._selectBox, null)
         DrawBox.initTrackEvents(this)
             .on('mousedown', this.onMouseDown)
-            .on('mousemove', this.onMouseMove)
             .on('keyup', this.onKeyUp)
             .on('drawbox-drag', this.onDrag)
             .on('drawbox-resize', this.onResize)
@@ -165,24 +157,6 @@ class DrawBox extends HTMLElement {
             } else {
                 this.deselect(child)
             }
-        }
-    }
-
-    // apply the 'draw-box-hover' class to selected elements when the mouse
-    // moves over them. We can't use CSS :hover or mouse-enter/leave events
-    // because the selection box has `pointer-events: none`. The latter is
-    // required in order to allow mouse events to pierce through the select box
-    // and reach the underlying user-element.
-    onMouseMove(ev) {
-        var pos = { left: ev.x, top: ev.y, width: 1, height: 1 }
-        var selected = []
-        for (var i = 0; i < this.children.length ; i += 1) {
-            var child = this.children[i]
-            if (!child._drawbox) {
-                continue
-            }
-
-            child.classList.toggle('draw-box-hover', intersect(pos, child))
         }
     }
 
