@@ -101,9 +101,8 @@ class DrawBox extends HTMLElement {
             .on('track', function (ev) {
                 var { x, y, state } = ev.detail
                 if (state === 'start') {
-                    this._rect = this.getBoundingClientRect()
-                    var el = ev.target._selectBox
                     this.fireDraw = null
+                    var el = ev.target._selectBox
                     if (this.hasAttribute('draw')) {
                         el = document.createElement(this.getAttribute('draw'))
                         this.fireDraw = DrawBox.refire('drawbox-draw', el)
@@ -114,9 +113,6 @@ class DrawBox extends HTMLElement {
                     this.appendChild(el)
                     this.select(el)
                 }
-
-                ev.detail.x -= this._rect.left
-                ev.detail.y -= this._rect.top
 
                 this.fireDraw ? this.fireDraw(ev) : this.onSelect(ev)
                 if (state === 'end') {
@@ -145,9 +141,8 @@ class DrawBox extends HTMLElement {
 
     onDraw(ev) {
         var el = ev.target._selectBox
-        var { x, y, dx, dy, state } = ev.detail
-        state === 'start' && (el.resize({ left: x, top: y }))
-
+        var { relx, rely, dx, dy, state } = ev.detail
+        state === 'start' && (el.resize({ left: relx, top: rely }))
         el.style.top = el._start.y + (dy < 0 ? dy : 0) + 'px'
         el.style.left = el._start.x + (dx < 0 ? dx : 0) + 'px'
         el.style.width = el._start.w + Math.abs(dx) + 'px'
@@ -369,14 +364,14 @@ DrawBox.initTrackEvents = function(el, options) {
     el.addEventListener('mousedown', mouseDown)
     el._drawboxBound = mouseDown
 
-    var start, inThreshold;
+    var start, inThreshold, rect;
     function mouseDown(ev) {
         if (ev.target !== el) {
             return // disable track event on sub-elements
         }
 
         start = ev
-
+        rect = el.getBoundingClientRect()
         window.addEventListener('mousemove', mouseMove)
         window.addEventListener('mouseup', mouseUp)
     }
@@ -414,6 +409,8 @@ DrawBox.initTrackEvents = function(el, options) {
             y: ev.y,
             dx: ev.x - start.x,
             dy: ev.y - start.y,
+            relx: ev.x - rect.left,
+            rely: ev.y - rect.top,
         }
 
         ev = new Event('track')
