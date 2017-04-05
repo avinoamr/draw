@@ -103,10 +103,10 @@ class DrawBox extends HTMLElement {
                 if (state === 'start') {
                     this._rect = this.getBoundingClientRect()
                     var el = ev.target._selectBox
-                    this._drawEl = null
+                    this.fireDraw = null
                     if (this.hasAttribute('draw')) {
                         el = document.createElement(this.getAttribute('draw'))
-                        this._drawEl = el
+                        this.fireDraw = DrawBox.refire('drawbox-draw', el)
                     }
 
                     el.style.display = 'block';
@@ -118,14 +118,8 @@ class DrawBox extends HTMLElement {
                 ev.detail.x -= this._rect.left
                 ev.detail.y -= this._rect.top
 
-                if (this._drawEl) {
-                    DrawBox.refire('drawbox-draw', this._drawEl)(ev)
-                } else {
-                    this.onSelect(ev)
-                }
-
+                this.fireDraw ? this.fireDraw(ev) : this.onSelect(ev)
                 if (state === 'end') {
-                    this._drawEl = null
                     this._selectBox.style.display = 'none'
                 }
             })
