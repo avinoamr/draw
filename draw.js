@@ -84,6 +84,7 @@ class DrawBox extends HTMLElement {
         this.tabindex = 0
         this.selection = []
         this._selectBox = $create(`<div class='draw-box-selection'></div>`)
+        $bind(this._selectBox, null)
         DrawBox.initTrackEvents(this)
             .on('click', this.onClick)
             .on('mousemove', this.onMouseMove)
@@ -94,31 +95,52 @@ class DrawBox extends HTMLElement {
             .on('track', function (ev) {
                 var { x, y, state } = ev.detail
                 var drawMode = this.hasAttribute('draw')
-                if (state === 'start' && drawMode) {
-                    var rect = this.getBoundingClientRect()
-                    var drawEl = this.getAttribute('draw') || 'div'
-                    this._drawEl = document.createElement(drawEl)
-                    this._drawEl.style.display = 'block';
-                    this._drawEl.style.position = 'absolute'
-                    this._drawEl.style.top = y - rect.top + 'px'
-                    this._drawEl.style.left = x - rect.left + 'px'
-                    this._drawEl.style.width = '0px'
-                    this._drawEl.style.height = '0px'
-                    this.appendChild(this._drawEl)
-                    this.select(this._drawEl)
-                }
-
-                if (state === 'start' && !drawMode) {
+                if (state === 'start') {
                     var rect = this.getBoundingClientRect()
                     var el = ev.target._selectBox
+                    if (drawMode) {
+                        el = document.createElement(this.getAttribute('draw'))
+                        this._drawEl = el
+                    }
+
                     el.style.display = 'block';
+                    el.style.position = 'absolute'
                     el.style.top = y - rect.top + 'px'
                     el.style.left = x - rect.left + 'px'
                     el.style.width = '0px'
                     el.style.height = '0px'
                     this.appendChild(el)
-                    $bind(el, null)
+                    this.select(el)
+
                 }
+
+
+                // if (state === 'start' && drawMode) {
+                //     var rect = this.getBoundingClientRect()
+                //     var drawEl = this.getAttribute('draw') || 'div'
+                //     this._drawEl = document.createElement(drawEl)
+                //     this._drawEl.style.display = 'block';
+                //     this._drawEl.style.position = 'absolute'
+                //     this._drawEl.style.top = y - rect.top + 'px'
+                //     this._drawEl.style.left = x - rect.left + 'px'
+                //     this._drawEl.style.width = '0px'
+                //     this._drawEl.style.height = '0px'
+                //     this.appendChild(this._drawEl)
+                //     this.select(this._drawEl)
+                //
+                // }
+
+                // if (state === 'start' && !drawMode) {
+                //     var rect = this.getBoundingClientRect()
+                //     var el = ev.target._selectBox
+                //     el.style.display = 'block';
+                //     el.style.top = y - rect.top + 'px'
+                //     el.style.left = x - rect.left + 'px'
+                //     el.style.width = '0px'
+                //     el.style.height = '0px'
+                //     this.appendChild(el)
+                //     $bind(el, null)
+                // }
 
                 if (this._drawEl) {
                     DrawBox.refire('drawbox-draw', this._drawEl)(ev)
