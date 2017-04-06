@@ -104,9 +104,10 @@ class DrawBox extends HTMLElement {
                     if (this.hasAttribute('draw')) {
                         el = document.createElement(this.getAttribute('draw'))
                         this.fireDraw = DrawBox.refire('drawbox-draw', el)
+                    } else {
+                        el.style.display = 'block';
                     }
 
-                    el.style.display = 'block';
                     el.style.position = 'absolute'
                     this.appendChild(el)
                     this.select(el)
