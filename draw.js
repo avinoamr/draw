@@ -18,7 +18,6 @@ draw-box {
 
 .draw-box-selection {
     position: absolute;
-    display: none;
     border: 1px solid silver;
 }
 
@@ -104,8 +103,6 @@ class DrawBox extends HTMLElement {
                     if (this.hasAttribute('draw')) {
                         el = document.createElement(this.getAttribute('draw'))
                         this.fireDraw = DrawBox.refire(el, 'drawbox-draw')
-                    } else {
-                        el.style.display = 'block';
                     }
 
                     el.style.position = 'absolute'
@@ -114,8 +111,9 @@ class DrawBox extends HTMLElement {
                 }
 
                 this.fireDraw ? this.fireDraw(ev) : this.onSelect(ev)
-                if (state === 'end') {
-                    this._selectBox.style.display = 'none'
+                if (state === 'end' && this._selectBox.parentNode) {
+                    // remove the selection box
+                    this._selectBox.parentNode.removeChild(this._selectBox)
                 }
             })
     }
