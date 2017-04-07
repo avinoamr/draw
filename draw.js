@@ -103,7 +103,7 @@ class DrawBox extends HTMLElement {
                     var el = ev.target._selectBox
                     if (this.hasAttribute('draw')) {
                         el = document.createElement(this.getAttribute('draw'))
-                        this.fireDraw = DrawBox.refire('drawbox-draw', el)
+                        this.fireDraw = DrawBox.refire(el, 'drawbox-draw')
                     } else {
                         el.style.display = 'block';
                     }
@@ -215,12 +215,12 @@ class DrawBox extends HTMLElement {
         // onDrag
         var dragger = selectBox.querySelector('.draw-box-dragger')
         DrawBox.initTrackEvents(dragger)
-            .addEventListener('track', DrawBox.refire('drawbox-drag', child))
+            .addEventListener('track', DrawBox.refire(child, 'drawbox-drag'))
 
         // onResize
         var resizer = selectBox.querySelector('.draw-box-resizer')
         DrawBox.initTrackEvents(resizer)
-            .addEventListener('track', DrawBox.refire('drawbox-resize', child))
+            .addEventListener('track', DrawBox.refire(child, 'drawbox-resize'))
 
         // fire the selected event
         var ev = new Event('drawbox-selected', { bubbles: true })
@@ -263,7 +263,7 @@ class DrawBox extends HTMLElement {
         return this
     }
 
-    static refire(name, el) {
+    static refire(el, name) {
         return function (ev) {
             var { detail } = ev
             ev = Object.assign(new Event(name, { bubbles: true }), { detail })
