@@ -59,6 +59,23 @@ class DrawBox extends HTMLElement {
         this.connectedCallback()
     }
 
+    set draw(v) {
+        if (typeof v === 'function') {
+            this.removeAttribute('draw')
+            this._draw = v
+        } else {
+            this.setAttribute('draw', v)
+        }
+    }
+
+    get draw() {
+        if (this.hasAttribute('draw')) {
+            return this.getAttribute('draw')
+        } else {
+            return this._draw || null
+        }
+    }
+
     connectedCallback() {
         if (this._inited) {
             return
@@ -100,8 +117,10 @@ class DrawBox extends HTMLElement {
                 if (state === 'start') {
                     this.fireDraw = null
                     var el = ev.target._selectBox
-                    if (this.hasAttribute('draw')) {
-                        el = document.createElement(this.getAttribute('draw'))
+                    if (this.draw) {
+                        el = (typeof this.draw === 'function')
+                            ? this.draw()
+                            : document.createElement(this.draw)
                         this.fireDraw = DrawBox.refire(el, 'drawbox-draw')
                     }
 
