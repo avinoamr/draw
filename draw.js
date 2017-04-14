@@ -108,6 +108,7 @@ class DrawBox extends HTMLElement {
         $bind(this._selectBox, null)
         DrawBox.initTrackEvents(this)
             .on('mousedown', this.onMouseDown)
+            .on('mouseup', this.onMouseUp)
             .on('keyup', this.onKeyUp)
             .on('drawbox-drag', textSelect, this.onDrag)
             .on('drawbox-resize', textSelect, this.onResize)
@@ -184,11 +185,16 @@ class DrawBox extends HTMLElement {
         }
     }
 
-    onMouseDown(ev) {
-        if (ev.target === this) {
-            // de-select all on background click.
-            this.deselectAll()
-        } else {
+    onMouseUp(ev) {
+        var dx = ev.x - this._lastDown.x
+        var dy = ev.y - this._lastDown.y
+        if (dx != 0 || dy != 0) {
+            return
+        }
+
+        // de-select all on background click.
+        this.deselectAll()
+        if (ev.target !== this) {
             // find the selected element by walking up the ancestors tree until
             // we find the immediate child of this draw-box to select.
             var target = ev.target
@@ -198,6 +204,10 @@ class DrawBox extends HTMLElement {
 
             this.select(target)
         }
+    }
+
+    onMouseDown(ev) {
+        this._lastDown = ev
     }
 
     onKeyUp(ev) {
