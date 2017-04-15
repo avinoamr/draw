@@ -235,9 +235,9 @@ class DrawBox extends HTMLElement {
         selectBox.style.left = child.offsetLeft + 'px'
         selectBox.style.width = child.offsetWidth + 'px'
         selectBox.style.height = child.offsetHeight + 'px'
+        this.appendChild(selectBox)
 
         child._selectBox = selectBox.update()
-        this.appendChild(selectBox)
 
         // onDrag
         var dragger = selectBox.querySelector('.draw-box-dragger')
