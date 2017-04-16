@@ -231,13 +231,10 @@ class DrawBox extends HTMLElement {
         `)
 
         $bind(selectBox, child)
-        selectBox.style.top = child.offsetTop + 'px'
-        selectBox.style.left = child.offsetLeft + 'px'
-        selectBox.style.width = child.offsetWidth + 'px'
-        selectBox.style.height = child.offsetHeight + 'px'
         this.appendChild(selectBox)
 
-        child._selectBox = selectBox.update()
+        setRect(selectBox, child.getBoundingClientRect())
+        child._selectBox = selectBox
 
         // onDrag
         var dragger = selectBox.querySelector('.draw-box-dragger')
@@ -343,16 +340,36 @@ function $create(innerHTML) {
     })
 }
 
+// Sets the bounding client rect of an element to match the one provided.
+function setRect(el, rect) {
+    el.style.top = rect.top + 'px'
+    el.style.left = rect.left + 'px'
+    el.style.width = rect.width + 'px'
+    el.style.height = rect.height + 'px'
+
+    // Different border-box styles might change the behavior of width and
+    // height. Instead of attempting to anticipate all of these different edge-
+    // cases, we're just comparing the resulting rect to the desired one and
+    // adjust accordingly.
+    var elRect = el.getBoundingClientRect()
+    var dTop = elRect.top - rect.top
+    var dLeft = elRect.left - rect.left
+    var dWidth = elRect.width - rect.width
+    var dHeight = elRect.height - rect.height
+
+    dTop !== 0 && (el.style.top = rect.top - dTop + 'px')
+    dLeft !== 0 && (el.style.left = rect.left - dLeft + 'px')
+    dWidth !== 0 && (el.style.width = rect.width - dWidth + 'px')
+    dHeight !== 0 && (el.style.height = rect.height - dHeight + 'px')
+}
+
 function $bind(el, target) {
     el.update = function () {
         if (!target) {
             return this
         }
 
-        target.style.top = this.style.top
-        target.style.left = this.style.left
-        target.style.width = this.style.width
-        target.style.height = this.style.height
+        setRect(target, this.getBoundingClientRect())
         return this
     }
 
