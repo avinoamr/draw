@@ -211,6 +211,10 @@ class DrawBox extends HTMLElement {
     }
 
     onKeyUp(ev) {
+        if (ev.target !== this) {
+            return
+        }
+        
         if (ev.ctrlKey && ev.keyCode === 65) { // Ctrl+A
             this.selectAll()
         } else if (ev.keyCode === 8) { // Del
